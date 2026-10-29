@@ -218,7 +218,8 @@ Clearly identify any separate interface-only demonstration using fixed sample re
 
 | Path | Responsibility |
 | --- | --- |
-| app.py | Upload, inference display, and review interface |
+| app.py | Single-page dashboard entry point, initialization, and workspace routing |
+| components/ | Dashboard layout, report form, staff review, shared suggestions, and model cache |
 | train.py | Training and validation entry point |
 | evaluate.py | Held-out evaluation and confusion matrix |
 | inference.py | Shared preprocessing and model loading |

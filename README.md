@@ -29,7 +29,8 @@ From the project directory:
 ```
 
 Open the local URL printed by Streamlit (normally http://127.0.0.1:8501).
-Use **Report a condition** to preview and submit a photo with optional location
+Use **Report a condition** to drag and drop a JPEG/PNG into the upload area
+or use the upload button to browse, then preview and submit it with optional location
 and capture time. Use **Staff review** to inspect saved reports, confirm or
 correct conditions, and record priority, notes, and action recommendations.
 The mode selector is navigation, not authentication. Keep this demonstration
@@ -53,6 +54,30 @@ are not automatically reclassified when training finishes.
 The inherited system environment has unrelated `fastapi`/`starlette` and
 `rembg`/`numpy` requirement conflicts reported by `pip check`. Dashboard imports
 and tests are checked separately; this is not a fully isolated clean environment.
+
+## Dashboard structure
+
+The dashboard is a single-page Streamlit app. `app.py` initializes storage and
+session state and renders the selected workspace without separate page scripts.
+Run it with the same `streamlit run app.py` command.
+
+```text
+app.py                      # App entry point and workspace routing
+components/
+    __init__.py
+    layout.py               # Branding, sidebar navigation, and footer
+    report_form.py          # Citizen photo submission and saved receipt
+    staff_review.py         # Staff queue, photo inspection, and review form
+    suggestion.py           # Shared model suggestion and assessment display
+    labels.py               # Shared condition, priority, and action labels
+    classifier.py           # Streamlit model cache and inference adapter
+dashboard/brand.html         # Local branding styles
+reports.py                  # Upload validation and report persistence
+inference.py                # Model loading, preprocessing, and prediction
+```
+
+UI components delegate persistence to `reports.py` and model execution to
+`inference.py`. Model outputs remain separate from staff decisions.
 
 ## Data and training
 
