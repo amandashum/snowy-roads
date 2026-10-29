@@ -7,6 +7,32 @@ review. No automatic operational decision or dispatch is implemented.
 
 ## Environment
 
+### First-time Windows setup
+
+Install Python 3.13 with the Windows Python launcher (`py`). Extract or clone
+the project, open PowerShell in its folder, and run:
+
+```powershell
+.\setup.ps1
+```
+
+The script creates an isolated `.venv`, installs `requirements.txt`, checks
+dependencies, and verifies that the included checkpoint loads on CPU.
+Internet access is required to install packages. No dataset or retraining
+is needed. Environment activation is not required.
+
+If PowerShell blocks script execution, use this invocation for this run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
+```
+
+Setup preserves existing environments. If it reports an incompatible or
+non-isolated `.venv`, rename that folder before rerunning setup. Do not
+commit or distribute `.venv`; each computer creates its own.
+
+### Existing development environment
+
 Python 3.13 with versions recorded in requirements.txt. The verified local
 environment has torch 2.9.0+cu128 and torchvision 0.24.0+cu128; requirements
 record their base versions so they do not force CUDA on other machines.
