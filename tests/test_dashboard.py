@@ -160,16 +160,16 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch):
 
     monkeypatch.setattr(report_form, "classify_photo", predict)
     app = AppTest.from_file(Path("app.py").resolve(), default_timeout=30).run()
-    app.button[0].click().run()
-    assert any("Confirm local storage" in message.value for message in app.error)
+    assert not app.checkbox
+    assert any("Submitting automatically saves" in message.value for message in app.caption)
     assert not list(storage.glob("*.json"))
-    app.checkbox[0].check()
     app.text_input[0].set_value("Test intersection")
     app.button[0].click().run()
     assert not app.exception
     receipt = app.session_state["receipt"]
     assert receipt["inference_status"] == "available"
     assert receipt["location"] == "Test intersection"
+    assert (storage / f"{receipt['record_id']}.png").exists()
     assert calls == [(storage / f"{receipt['record_id']}.png", reports.ROOT / "models/classifier.pt")]
     assert any("Report saved" in message.value for message in app.success)
     assert len(app.table) == 1

@@ -41,6 +41,9 @@ Photos are normalized to PNG with embedded metadata removed and saved under
 excluded from Git. Capture times must include a timezone offset and remain
 unknown when not supplied. Model and staff decisions are saved separately.
 There is no automatic retraining or communication with snowplow crews.
+Selecting **Analyze and save report** automatically saves the photo and supplied
+details locally; there is no separate storage checkbox. Previewing a photo alone
+does not save a report.
 
 The dashboard reads `models/classifier.pt`. If it is missing, being written,
 or invalid, the report is retained for manual review without an invented label.

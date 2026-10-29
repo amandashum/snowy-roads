@@ -356,7 +356,8 @@ Avoid collecting names or other unnecessary personal information.
 Strip embedded image metadata before retaining uploaded images.
 Keep supplied location separate from embedded metadata.
 Use permitted, anonymized images for public demonstrations.
-Default to session-only image handling unless retention is explicitly enabled.
+Previewing a photo does not persist a report. Submitting a report automatically
+saves its photo and supplied details locally, with a visible notice before submission.
 Clearly explain local review storage and provide a reset option.
 
 ## 16. Future extensions

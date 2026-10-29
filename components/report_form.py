@@ -10,7 +10,7 @@ from components.suggestion import show_suggestion
 
 
 def render_report_form():
-    """Render the submission workspace and persist reports after consent."""
+    """Render the submission workspace and save photos when reports are submitted."""
     st.title("Report a road condition")
     st.write("Upload a recent road photo for a suggested condition and staff assessment.")
     left, right = st.columns([1.15, 1], gap="large")
@@ -39,13 +39,11 @@ def render_report_form():
                                         placeholder="2026-10-29T14:30:00-07:00",
                                         help="Include the timezone offset. Leave blank if unknown.", max_chars=64)
             st.caption("Upload time is recorded separately. Missing capture time and location remain unknown.")
-            consent = st.checkbox("Save this photo and supplied details locally for staff review.")
+            st.caption("Submitting automatically saves this photo and supplied details locally for staff review.")
             submit = st.form_submit_button("Analyze and save report", type="primary", width="stretch")
         if submit:
             if photo is None:
                 st.error("Choose a road photo first.")
-            elif not consent:
-                st.error("Confirm local storage before submitting.")
             else:
                 try:
                     with st.spinner("Saving photo and checking the road condition…"):

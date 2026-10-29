@@ -26,8 +26,8 @@ def show_suggestion(record):
     st.info(assessment_flag(record))
     if record["uncertain"] is None:
         st.caption("Uncertainty threshold has not been validated. Every suggestion needs staff review.")
-    with st.expander("Inspect model scores"):
-        st.caption("Scores describe model preference, not verified probabilities of correctness.")
-        st.table([{"Condition": DISPLAY[label], "Model score": f"{score:.1%}"}
-                  for label, score in record["class_scores"].items()], alt="Scores for all four condition classes")
+    st.subheader("Model scores")
+    st.caption("Scores describe model preference, not verified probabilities of correctness.")
+    st.table([{"Condition": DISPLAY[label], "Model score": f"{score:.1%}"}
+              for label, score in record["class_scores"].items()], alt="Scores for all four condition classes")
     st.caption("A condition suggestion does not establish road safety or whether plowing is needed.")
