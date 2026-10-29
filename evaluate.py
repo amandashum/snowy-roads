@@ -119,7 +119,8 @@ def main():
     axes.grid(alpha=0.25)
     axes.legend()
     figure.tight_layout()
-    graph_path = args.output.with_suffix(".loss.png")
+    graph_path = Path("graphs") / args.output.with_suffix(".loss.png").name
+    graph_path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(graph_path, dpi=200)
     print(f"Evaluation loss graph saved: {graph_path}", flush=True)
 

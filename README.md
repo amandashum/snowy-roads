@@ -140,7 +140,7 @@ Expected output: batch progress, epoch metrics, checkpoint-save messages,
 and a final graph-save message.
 
 Files: `models/smoke.pt`, `models/smoke.split.json`,
-`models/smoke.history.json`, and `models/smoke.loss.png`.
+`models/smoke.history.json`, and `graphs/smoke.loss.png`.
 
 This checks the training pipeline on a small subset. Do not use this
 checkpoint for held-out evaluation or dashboard suggestions.
@@ -160,7 +160,7 @@ Files:
 - `models/classifier.pt`: checkpoint with the lowest validation loss.
 - `models/classifier.split.json`: training and validation image membership.
 - `models/classifier.history.json`: metrics for every completed epoch.
-- `models/classifier.loss.png`: both loss curves across the entire run.
+- `graphs/classifier.loss.png`: both loss curves across the entire run.
 
 The checkpoint saves when validation loss improves. History saves after
 each epoch. The complete loss graph saves once after the final epoch.
@@ -179,7 +179,7 @@ Files saved after all test batches finish:
 
 - `reports/evaluation.json`: loss, accuracy, macro F1, per-class metrics,
   confusion matrix, majority baseline, and CPU pipeline timing.
-- `reports/evaluation.loss.png`: loss for each test batch.
+- `graphs/evaluation.loss.png`: loss for each test batch.
 
 Confusion-matrix rows are actual classes; columns are predicted classes.
 The confusion matrix is stored in JSON, not as a separate image.
@@ -227,7 +227,7 @@ custom checkpoint and report paths to preserve another experiment:
 .venv\Scripts\python.exe inference.py "path\to\photo.jpg" --model models/experiment-02.pt
 ```
 
-Training metadata and graphs use the checkpoint's filename stem.
+Training metadata and graphs use the checkpoint's filename stem. Graphs are saved in `graphs/`.
 Evaluation graphs use the report's filename stem. The dashboard continues
 to use `models/classifier.pt`.
 
@@ -245,8 +245,8 @@ history accompany the checkpoint. Reusing an output path overwrites those
 generated artifacts; use a new output name to preserve an experiment.
 
 After the final epoch, training saves a graph of training and validation loss
-to `models/classifier.loss.png`. A custom `--output` checkpoint path produces
-a matching `.loss.png` file beside that checkpoint. The graph includes every
+to `graphs/classifier.loss.png`. A custom `--output` checkpoint path produces
+a matching `.loss.png` file in `graphs/`. The graph includes every
 completed epoch and is generated once, after training finishes.
 
 The deterministic ImageNet resize, center crop, and normalization are shared
@@ -260,8 +260,8 @@ and CPU pipeline time including decoding and preprocessing. Smoke-test
 models are explicitly rejected by held-out evaluation.
 
 After all test batches finish, evaluation saves a graph of each batch's loss
-to `reports/evaluation.loss.png`, alongside the final JSON report. A custom
-`--output` report path produces a matching `.loss.png` file. This graph shows
+to `graphs/evaluation.loss.png`. The final JSON report stays in `reports/`. A custom
+`--output` report path produces a matching `.loss.png` file in `graphs/`. This graph shows
 variation across test batches; the model does not learn during evaluation.
 
 ## Limitations and next steps

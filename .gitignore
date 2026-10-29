@@ -5,7 +5,6 @@ __pycache__/
 /models/*
 !/models/classifier.pt
 !/models/classifier.history.json
-!/models/classifier.loss.png
 !/models/classifier.split.json
 /reports/*
 !/reports/evaluation.json
