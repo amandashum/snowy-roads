@@ -108,43 +108,63 @@ def main():
     parser.add_argument("--limit", type=int, help="Per-split smoke-test limit; not full evaluation")
     parser.add_argument("--output", type=Path, default=Path("models/classifier.pt"))
     args = parser.parse_args()
+
     if args.epochs < 1 or args.batch_size < 1 or (args.limit is not None and args.limit < 4):
         parser.error("Use positive epochs/batch size and a limit of at least four")
     torch.manual_seed(args.seed)
+
     dataset = ImageFolder(args.data / "train", transform=preprocessing())
+
     if dataset.classes != CLASSES:
         raise ValueError(f"Expected {CLASSES}; found {dataset.classes}")
+    
     train, valid = split_indices(dataset.samples, args.seed)
     rng = random.Random(args.seed)
+
     rng.shuffle(train)
     rng.shuffle(valid)
+
     if args.limit:
         train, valid = train[:args.limit], valid[:args.limit]
     loaders = [DataLoader(Subset(dataset, indices), batch_size=args.batch_size,
                           shuffle=shuffle, num_workers=0) for indices, shuffle in ((train, True), (valid, False))]
+    
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = build_model(pretrained=True).to(device)
+    
     for parameter in model.parameters():
         parameter.requires_grad = False
+    
     for parameter in model.fc.parameters():
         parameter.requires_grad = True
+    
     optimizer = torch.optim.Adam(model.fc.parameters(), lr=0.001)
+    
     args.output.parent.mkdir(parents=True, exist_ok=True)
+   
     manifest = {name: [str(Path(dataset.samples[i][0]).relative_to(args.data)) for i in indices]
                 for name, indices in (("train", train), ("validation", valid))}
+    
     args.output.with_suffix(".split.json").write_text(json.dumps(manifest, indent=2))
+    
     history, best = [], float("inf")
+    
     print(f"Device: {device} | Training images: {len(train):,} | "
           f"Validation images: {len(valid):,}", flush=True)
+   
     for epoch in range(args.epochs):
         print(f"\nEpoch {epoch + 1} out of {args.epochs}", flush=True)
+        
         result = {"epoch": epoch + 1, "train": run_epoch(model, loaders[0], device, optimizer),
                   "validation": run_epoch(model, loaders[1], device)}
+        
         history.append(result)
+        
         print(f"Epoch {epoch + 1}/{args.epochs} complete | "
               f"Training loss: {result['train']['loss']:.4f} | "
               f"Validation loss: {result['validation']['loss']:.4f} | "
               f"Validation accuracy: {result['validation']['accuracy']:.1%}", flush=True)
+        
         if result["validation"]["loss"] < best:
             best = result["validation"]["loss"]
             torch.save({"state_dict": model.cpu().state_dict(), "classes": CLASSES,
@@ -152,26 +172,34 @@ def main():
                         "model_version": args.output.stem, "seed": args.seed,
                         "epoch": epoch + 1, "smoke_test": bool(args.limit),
                         "uncertainty_threshold": None}, args.output)
+        
             model.to(device)
+        
             print(f"  Best model saved: {args.output}", flush=True)
+        
         args.output.with_suffix(".history.json").write_text(json.dumps(history, indent=2))
 
     from matplotlib.figure import Figure
 
     figure = Figure(figsize=(8, 5))
     axes = figure.subplots()
+    
     epochs = [row["epoch"] for row in history]
+    
     axes.plot(epochs, [row["train"]["loss"] for row in history],
               marker="o", label="Training loss")
     axes.plot(epochs, [row["validation"]["loss"] for row in history],
               marker="s", linestyle="--", label="Validation loss")
     axes.set(title="Training and validation loss",
              xlabel="Epoch", ylabel="Cross-entropy loss")
+    
     axes.set_xticks(epochs)
     axes.grid(alpha=0.25)
     axes.legend()
+    
     figure.tight_layout()
     graph_path = Path("graphs") / args.output.with_suffix(".loss.png").name
+    
     graph_path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(graph_path, dpi=200)
     print(f"Loss graph saved: {graph_path}", flush=True)
