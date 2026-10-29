@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "classes": [
+    {"id": "clear", "display_label": "Clear surface"},
+    {"id": "light", "display_label": "Light-covered surface"},
+    {"id": "medium", "display_label": "Medium-to-heavy-covered surface"},
+    {"id": "plowed", "display_label": "Plowed surface"}
+  ]
+}
