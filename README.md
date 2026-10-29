@@ -232,8 +232,9 @@ Evaluation graphs use the report's filename stem. The dashboard continues
 to use `models/classifier.pt`.
 
 Use `--help` with any script to inspect its supported options.
-Generated model artifacts (except the included `models/classifier.pt`),
-evaluation reports, uploads, and reviews are excluded from Git.
+The trained checkpoint, its training history, loss graph, split manifest,
+and `reports/evaluation.json` are included in Git. Other generated model
+artifacts and reports, uploads, and reviews are excluded from Git.
 
 Training reserves 20 percent of training camera IDs for validation with seed
 42. It never moves source images or trains on the test set. It freezes the
@@ -278,6 +279,7 @@ variation across test batches; the model does not learn during evaluation.
 - Browser layout and keyboard accessibility still require visual/manual review.
 - Four-class predictions cannot establish road safety, snow depth, or urgency.
 
-The trained `models/classifier.pt` checkpoint is included in the repository;
-other model artifacts and generated reports remain local and excluded from Git.
+The trained checkpoint and the supporting evidence listed above are included
+in the repository; other model artifacts and generated reports remain local
+and excluded from Git.
 The source dataset is described in data/Snow-Covered-Roads-Dataset-main/README.md.

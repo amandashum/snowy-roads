@@ -4,7 +4,11 @@ __pycache__/
 .pytest_cache/
 /models/*
 !/models/classifier.pt
-/reports/
+!/models/classifier.history.json
+!/models/classifier.loss.png
+!/models/classifier.split.json
+/reports/*
+!/reports/evaluation.json
 /reviews/
 /uploads/
 /.venv/

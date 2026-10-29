@@ -1,0 +1,71 @@
+{
+  "accuracy": 0.8672850108782778,
+  "macro_f1": 0.7717057435157877,
+  "per_class": [
+    {
+      "class": "clear",
+      "support": 4041,
+      "precision": 0.9170387779083431,
+      "recall": 0.965602573620391,
+      "f1": 0.9406943105110898
+    },
+    {
+      "class": "light",
+      "support": 924,
+      "precision": 0.7317073170731707,
+      "recall": 0.5194805194805194,
+      "f1": 0.6075949367088607
+    },
+    {
+      "class": "medium",
+      "support": 3029,
+      "precision": 0.8855737704918033,
+      "recall": 0.8917134367778144,
+      "f1": 0.8886329988484948
+    },
+    {
+      "class": "plowed",
+      "support": 739,
+      "precision": 0.6360103626943006,
+      "recall": 0.6644113667117727,
+      "f1": 0.6499007279947054
+    }
+  ],
+  "confusion_matrix": [
+    [
+      3902,
+      24,
+      22,
+      93
+    ],
+    [
+      154,
+      480,
+      241,
+      49
+    ],
+    [
+      60,
+      129,
+      2701,
+      139
+    ],
+    [
+      139,
+      23,
+      86,
+      491
+    ]
+  ],
+  "count": 8733,
+  "loss": 0.3737562848068411,
+  "cpu_pipeline_seconds_per_image": 0.01692531405015287,
+  "majority_baseline_accuracy": 0.4627275850223291,
+  "model_version": "classifier",
+  "classes": [
+    "clear",
+    "light",
+    "medium",
+    "plowed"
+  ]
+}
