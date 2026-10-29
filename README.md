@@ -44,6 +44,10 @@ There is no automatic retraining or communication with snowplow crews.
 Selecting **Analyze and save report** automatically saves the photo and supplied
 details locally; there is no separate storage checkbox. Previewing a photo alone
 does not save a report.
+Returned results appear in a centered pop-up card with a fade-and-slide entrance.
+Press **Esc**, click outside the card, or use its close icon to dismiss it without
+deleting the saved report. **View latest result** reopens it without running
+inference again. The animation respects the browser's reduced-motion preference.
 
 The dashboard reads `models/classifier.pt`. If it is missing, being written,
 or invalid, the report is retained for manual review without an invented label.
@@ -72,6 +76,7 @@ components/
     report_form.py          # Citizen photo submission and saved receipt
     staff_review.py         # Staff queue, photo inspection, and review form
     suggestion.py           # Shared model suggestion and assessment display
+    result_card.py          # Dismissible result pop-up
     labels.py               # Shared condition, priority, and action labels
     classifier.py           # Streamlit model cache and inference adapter
 dashboard/brand.html         # Local branding styles

@@ -4,6 +4,16 @@
 display:grid; place-items:center; font:700 23px system-ui; }
 .snowy-wordmark { font:700 13px system-ui; letter-spacing:.14em; color:#176657; }
 .snowy-subtitle { font:400 12px system-ui; color:#485e61; margin-top:4px; }
+[class*="st-key-report-result-"] {
+  animation: snowy-result-enter 420ms ease-out both;
+}
+@keyframes snowy-result-enter {
+  from { opacity:0; transform:translateY(12px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="st-key-report-result-"] { animation:none; }
+}
 </style>
 <div class="snowy-brand" aria-label="Snowy Roads, winter condition review">
   <span class="snowy-mark" aria-hidden="true">❄</span>

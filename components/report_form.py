@@ -6,7 +6,7 @@ import streamlit as st
 
 import reports
 from components.classifier import classify_photo
-from components.suggestion import show_suggestion
+from components.result_card import show_result_card
 
 
 def render_report_form():
@@ -41,6 +41,7 @@ def render_report_form():
             st.caption("Upload time is recorded separately. Missing capture time and location remain unknown.")
             st.caption("Submitting automatically saves this photo and supplied details locally for staff review.")
             submit = st.form_submit_button("Analyze and save report", type="primary", width="stretch")
+        show_result = False
         if submit:
             if photo is None:
                 st.error("Choose a road photo first.")
@@ -50,10 +51,13 @@ def render_report_form():
                         st.session_state.receipt = reports.create_report({
                             "image_base64": base64.b64encode(photo.getvalue()).decode(),
                             "location": location, "captured_at": captured_at}, predictor=classify_photo)
+                    show_result = True
                 except (ValueError, OSError) as error:
                     st.error(f"The report could not be submitted: {error}")
         if st.session_state.receipt:
             receipt = st.session_state.receipt
             st.success(f"Report saved · {receipt['record_id'][:8]}")
-            show_suggestion(receipt)
+            reopen = st.button("View latest result", key="view_latest_result")
             st.caption("This receipt belongs to your most recently saved report.")
+            if show_result or reopen:
+                show_result_card(receipt)

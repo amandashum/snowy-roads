@@ -173,6 +173,7 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch):
     assert calls == [(storage / f"{receipt['record_id']}.png", reports.ROOT / "models/classifier.pt")]
     assert any("Report saved" in message.value for message in app.success)
     assert len(app.table) == 1
+    assert len(app.get("dialog")) == 1
 
     app.radio(key="workspace").set_value("Staff review").run()
     assert not app.exception
@@ -181,6 +182,11 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch):
     assert not app.exception
     assert app.session_state["receipt"] == receipt
     assert any("Report saved" in message.value for message in app.success)
+    assert not app.table
+    app.button(key="view_latest_result").click().run()
+    assert not app.exception
+    assert len(app.table) == 1
+    assert len(app.get("dialog")) == 1
     assert len(calls) == 1
     assert len(list(storage.glob("*.json"))) == 1
 
