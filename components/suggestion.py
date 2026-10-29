@@ -18,7 +18,6 @@ def assessment_flag(record):
 
 def show_suggestion(record):
     """Render the original suggestion, scores, version, and uncertainty limitations."""
-    st.subheader("Model suggestion")
     if record["inference_status"] != "available":
         st.warning("The model is unavailable. This report is saved for manual review.")
         return
