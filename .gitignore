@@ -2,7 +2,8 @@
 *.zip
 __pycache__/
 .pytest_cache/
-/models/
+/models/*
+!/models/classifier.pt
 /reports/
 /reviews/
 /uploads/

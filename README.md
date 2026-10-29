@@ -17,6 +17,11 @@ are installed locally; NumPy and Pillow match requirements.txt.
 
 ## Run the dashboard
 
+The trained checkpoint is included at `models/classifier.pt`. After installing
+the dependencies, you can run the dashboard without downloading the dataset
+or retraining the model. Dataset preparation and training below are only
+needed to reproduce or retrain the classifier.
+
 From the project directory:
 
 ```powershell
@@ -227,8 +232,8 @@ Evaluation graphs use the report's filename stem. The dashboard continues
 to use `models/classifier.pt`.
 
 Use `--help` with any script to inspect its supported options.
-Model artifacts, evaluation reports, uploads, and reviews are excluded
-from Git.
+Generated model artifacts (except the included `models/classifier.pt`),
+evaluation reports, uploads, and reviews are excluded from Git.
 
 Training reserves 20 percent of training camera IDs for validation with seed
 42. It never moves source images or trains on the test set. It freezes the
@@ -273,5 +278,6 @@ variation across test batches; the model does not learn during evaluation.
 - Browser layout and keyboard accessibility still require visual/manual review.
 - Four-class predictions cannot establish road safety, snow depth, or urgency.
 
-Model artifacts and generated reports remain local and excluded from Git.
+The trained `models/classifier.pt` checkpoint is included in the repository;
+other model artifacts and generated reports remain local and excluded from Git.
 The source dataset is described in data/Snow-Covered-Roads-Dataset-main/README.md.
