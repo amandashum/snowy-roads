@@ -296,6 +296,58 @@ def test_photo_previews_stay_compact_and_preserve_original(size):
     assert image.tell() == 0
 
 
+def test_priority_situations_use_reviewed_staff_priorities():
+    """Exclude pending and unassigned reports and sort staff priorities before recency."""
+    from components.staff_review import priority_situations
+
+    rows = [
+        {"record_id": "routine", "review_status": "confirmed", "priority": "routine", "reviewed_at": "2026-10-29"},
+        {"record_id": "pending", "review_status": "pending", "priority": "urgent-assessment", "reviewed_at": None},
+        {"record_id": "urgent-old", "review_status": "corrected", "priority": "urgent-assessment", "reviewed_at": "2026-10-27"},
+        {"record_id": "unassigned", "review_status": "confirmed", "priority": "unassigned", "reviewed_at": "2026-10-29"},
+        {"record_id": "soon", "review_status": "inconclusive", "priority": "assess-soon", "reviewed_at": "2026-10-29"},
+        {"record_id": "urgent-new", "review_status": "confirmed", "priority": "urgent-assessment", "reviewed_at": "2026-10-28"},
+    ]
+    assert [row["record_id"] for row in priority_situations(rows)] == [
+        "urgent-new", "urgent-old", "soon", "routine"]
+    assert priority_situations([]) == []
+
+
+def test_priority_panel_updates_and_reopens_saved_assessment(storage):
+    """Show a saved priority even in an empty pending queue and reopen it from the panel."""
+    image = io.BytesIO()
+    Image.new("RGB", (32, 32)).save(image, format="PNG")
+
+    def unavailable(*args):
+        """Keep this interface test independent of the model artifact."""
+        raise FileNotFoundError("fixture")
+
+    record = reports.create_report(
+        {"image_base64": base64.b64encode(image.getvalue()).decode(), "location": "Test Street"},
+        predictor=unavailable)
+    app = AppTest.from_file(Path("app.py").resolve(), default_timeout=30).run()
+    app.radio(key="workspace").set_value("Staff review").run()
+    assert not app.exception
+    assert any("No reviewed reports" in item.value for item in app.info)
+    app.selectbox[1].set_value("medium")
+    app.selectbox[2].set_value("urgent-assessment")
+    app.selectbox[3].set_value("assess-plowing")
+    app.button(key=f"save_review_{record['record_id']}").click().run()
+    assert not app.exception
+    assert any("No reports in this view" in item.value for item in app.info)
+    assert app.button(key=f"priority_{record['record_id']}")
+    app.button(key=f"priority_{record['record_id']}").click().run()
+    assert not app.exception
+    assert app.segmented_control[0].value == "Reviewed"
+    assert app.selectbox(key="selected_report").value == record["record_id"]
+    assert app.selectbox[2].value == "urgent-assessment"
+
+    (storage / f"{record['record_id']}.png").unlink()
+    app.run()
+    assert not app.exception
+    assert any("Photo preview unavailable" in item.value for item in app.caption)
+
+
 def test_classifier_component_refreshes_cache_and_rejects_smoke_models(tmp_path, monkeypatch):
     """Reuse unchanged checkpoints, reload changed files, and reject smoke-test models."""
     import inference

@@ -76,6 +76,11 @@ Use **Staff Review** to inspect saved reports, confirm or
 correct conditions, and record priority, notes, and action recommendations.
 Staff photo previews are capped at 260 pixels tall. Saving an assessment immediately
 updates the queue and counts.
+The right-side **Priority Situations** panel lists reviewed reports with staff-assigned
+priority: Urgent assessment, Assess soon, then Routine. Newest reviews appear first
+within each level. Each entry shows a photo, location, capture time, review status,
+and recommended action. **Open assessment** reopens its saved review. Pending and
+unassigned reports remain outside this panel; model suggestions never assign priority.
 The mode selector is navigation, not authentication. Keep this demonstration
 bound to localhost.
 

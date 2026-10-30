@@ -7,7 +7,7 @@ import streamlit as st
 import reports
 from components.labels import ACTIONS, DISPLAY, PRIORITIES
 from components.layout import render_page_heading, render_section_heading
-from components.photo import render_photo
+from components.photo import preview_image, render_photo
 from components.suggestion import assessment_flag, show_results
 
 
@@ -20,6 +20,50 @@ def load_reports():
         except (OSError, ValueError):
             st.warning(f"A saved report could not be read: {path.name}")
     return sorted(records, key=lambda row: row["uploaded_at"], reverse=True)
+
+
+def priority_situations(records):
+    """Return reviewed reports ordered by staff priority, newest review first within each level."""
+    order = {"urgent-assessment": 0, "assess-soon": 1, "routine": 2}
+    reviewed = [row for row in records if row["review_status"] in
+                {"confirmed", "corrected", "inconclusive"} and row["priority"] in order]
+    reviewed.sort(key=lambda row: row.get("reviewed_at") or "", reverse=True)
+    return sorted(reviewed, key=lambda row: order[row["priority"]])
+
+
+def open_priority_situation(identifier):
+    """Switch to reviewed reports and select the clicked situation before widgets render."""
+    st.session_state.review_filter = "Reviewed"
+    st.session_state.selected_report = identifier
+
+
+def render_priority_situations(records):
+    """Display a scrollable panel of reviewed photos with staff-assigned priorities and actions."""
+    situations = priority_situations(records)
+    with st.container(border=True, key="priority_situations"):
+        st.subheader("Priority Situations")
+        st.caption(f"{len(situations)} reviewed reports · Staff-assigned priority")
+        if not situations:
+            st.info("No reviewed reports have been assigned priority.")
+            return
+        with st.container(height=560, border=False):
+            for row in situations:
+                identifier = row["record_id"]
+                with st.container(border=True):
+                    st.badge(PRIORITIES[row["priority"]], icon=":material/flag:")
+                    image = reports.UPLOADS / f"{identifier}.png"
+                    try:
+                        st.image(preview_image(image, max_height=110),
+                                 alt=f"Reviewed road photo: {row['location'] or 'Unknown location'}",
+                                 width="content")
+                    except (OSError, ValueError):
+                        st.caption("Photo preview unavailable")
+                    st.text(row["location"] or "Unknown location")
+                    st.caption(f"Captured: {row['captured_at'] or 'Unknown'}")
+                    st.caption(f"Review: {row['review_status'].title()}")
+                    st.write(ACTIONS[row["action"]])
+                    st.button("Open assessment", key=f"priority_{identifier}", width="stretch",
+                              on_click=open_priority_situation, args=(identifier,))
 
 
 def render_observation(record):
@@ -96,22 +140,30 @@ def render_staff_review():
     with st.container(border=True, key="queue_controls"):
         filters, refresh = st.columns([4, 1], vertical_alignment="bottom")
         with filters:
-            filter_name = st.segmented_control("Show Reports", ["Pending", "All", "Reviewed"], default="Pending")
+            filter_name = st.segmented_control("Show Reports", ["Pending", "All", "Reviewed"],
+                                               default="Pending", key="review_filter")
         with refresh:
             if st.button("Refresh", key="refresh_reports", icon=":material/refresh:", width="stretch"):
                 st.rerun()
     filtered = [row for row in records if filter_name == "All" or
                 (row["review_status"] == "pending") == (filter_name == "Pending")]
-    if not filtered:
-        st.info("No reports in this view. Submit a road photo or choose another filter.")
-        return
-    selected = st.selectbox("Choose a Report", [row["record_id"] for row in filtered],
+    workspace, panel = st.columns([3, 1], gap="large")
+    with panel:
+        render_priority_situations(records)
+    with workspace:
+        if not filtered:
+            st.info("No reports in this view. Submit a road photo or choose another filter.")
+            return
+        identifiers = [row["record_id"] for row in filtered]
+        if st.session_state.get("selected_report") not in identifiers:
+            st.session_state.selected_report = identifiers[0]
+        selected = st.selectbox("Choose a Report", identifiers, key="selected_report",
                             format_func=lambda identifier: next(
                                 f"{row['record_id'][:8]} · {row['location'] or 'Unknown location'} · {assessment_flag(row)}"
                                 for row in filtered if row["record_id"] == identifier))
-    record = next(row for row in filtered if row["record_id"] == selected)
-    left, right = st.columns([1, 1], gap="large")
-    with left, st.container(border=True, key="observation_card"):
-        render_observation(record)
-    with right, st.container(border=True, key="assessment_card"):
-        render_review_form(record)
+        record = next(row for row in filtered if row["record_id"] == selected)
+        left, right = st.columns([1, 1], gap="large")
+        with left, st.container(border=True, key="observation_card"):
+            render_observation(record)
+        with right, st.container(border=True, key="assessment_card"):
+            render_review_form(record)
