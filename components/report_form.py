@@ -7,6 +7,7 @@ import streamlit as st
 
 import reports
 from components.classifier import classify_photo
+from components.capture_time import render_capture_time
 from components.layout import render_page_heading, render_section_heading
 from components.photo import render_photo
 from components.suggestion import render_condition_title, show_results
@@ -18,7 +19,8 @@ def start_new_report():
     """Clear the submission controls without deleting saved reports."""
     st.session_state.receipt = None
     st.session_state.upload_revision = st.session_state.get("upload_revision", 0) + 1
-    for key in ("report_location", "report_capture_time", "report_consent", "last_submission"):
+    for key in ("report_location", "report_capture_clock", "report_capture_zone", "report_capture_occurrence",
+                "report_consent", "last_submission"):
         st.session_state.pop(key, None)
 
 
@@ -43,19 +45,15 @@ def render_report_form():
     with right, st.container(border=True, key="details_card"):
         render_section_heading("02", "Details & Analysis")
         st.caption("Add a location to make the report easier to find")
-        with st.form("citizen_report", border=False):
-            location = st.selectbox("Location (optional)", street_names(), index=None, key="report_location",
-                                    accept_new_options=True,
-                                    placeholder="Start typing a street, intersection, or landmark",
-                                    help="Pick a St. John's street from the list to show the photo on the "
-                                         "Road Map. Small spelling mistakes still find the street.") or ""
-            location = location.strip()[:200]
-            captured_at = st.text_input("Photo Taken At (optional)", key="report_capture_time",
-                                        placeholder="2026-10-30T14:30:00-03:30",
-                                        help="Include the timezone offset, or leave blank if unknown", max_chars=64)
-            consent = st.checkbox("I agree to terms and conditions",
-                                  key="report_consent")
-            submit = st.form_submit_button("Analyze Photo", key="analyze_photo", type="primary", width="stretch")
+        location = st.selectbox("Location (optional)", street_names(), index=None, key="report_location",
+                                accept_new_options=True,
+                                placeholder="Start typing a street, intersection, or landmark",
+                                help="Pick a St. John's street from the list to show the photo on the "
+                                     "Road Map. Small spelling mistakes still find the street.") or ""
+        location = location.strip()[:200]
+        captured_at, capture_error = render_capture_time()
+        consent = st.checkbox("I agree to terms and conditions", key="report_consent")
+        submit = st.button("Analyze Photo", key="analyze_photo", type="primary", width="stretch")
         if submit:
             if photo is None:
                 st.error("Please upload a road photo before analyzing")
@@ -63,6 +61,8 @@ def render_report_form():
                 st.error("Please upload a valid JPEG or PNG photo before analyzing")
             elif not consent:
                 st.error("Please agree to terms and conditions before submitting")
+            elif capture_error:
+                st.error(capture_error)
             else:
                 content = photo.getvalue()
                 signature = (hashlib.sha256(content).hexdigest(), location, captured_at)

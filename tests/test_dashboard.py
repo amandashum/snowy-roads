@@ -241,7 +241,7 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch, avai
     assert app.checkbox(key="report_consent").label == "I agree to terms and conditions"
     assert any("Please agree to terms and conditions" in message.value for message in app.error)
     assert not list(storage.glob("*.json"))
-    app.checkbox[0].check()
+    app.checkbox(key="report_consent").check()
     app.selectbox(key="report_location").set_value("Water Street")
     app.button(key="analyze_photo").click().run()
     assert not app.exception
