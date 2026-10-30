@@ -242,12 +242,12 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch, avai
     assert any("Please agree to terms and conditions" in message.value for message in app.error)
     assert not list(storage.glob("*.json"))
     app.checkbox[0].check()
-    app.text_input[0].set_value("Test intersection")
+    app.selectbox(key="report_location").set_value("Water Street")
     app.button(key="analyze_photo").click().run()
     assert not app.exception
     receipt = app.session_state["receipt"]
     assert receipt["inference_status"] == ("available" if available else "unavailable")
-    assert receipt["location"] == "Test intersection"
+    assert receipt["location"] == "Water Street"
     assert calls == [(storage / f"{receipt['record_id']}.png", reports.ROOT / "models/classifier.pt")]
     assert any("Report saved" in message.value for message in app.success)
     assert receipt["record_id"] in app.session_state["my_report_ids"]
@@ -288,7 +288,7 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch, avai
     assert not app.exception
     assert app.session_state["receipt"] is None
     assert app.session_state["upload_revision"] == 1
-    assert app.text_input(key="report_location").value == ""
+    assert app.selectbox(key="report_location").value is None
     assert not app.checkbox(key="report_consent").value
     assert len(list(storage.glob("*.json"))) == 1
 

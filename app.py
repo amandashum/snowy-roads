@@ -6,6 +6,7 @@ import reports
 from components.layout import apply_theme, render_sidebar
 from components.report_form import render_report_form
 from components.report_history import render_report_history
+from components.road_map import render_road_map
 from components.staff_review import render_staff_review
 
 
@@ -23,6 +24,8 @@ def main():
         render_report_form()
     elif page == "My reports":
         render_report_history()
+    elif page == "Road map":
+        render_road_map()
     else:
         render_staff_review()
 

@@ -2,10 +2,16 @@
 # For CUDA builds, follow the matching PyTorch installation instructions
 torch==2.9.0
 torchvision==0.24.0
-Pillow==12.2.0
+Pillow==12.2.0  # Also builds Road Map popup thumbnails
 numpy==2.2.6
 matplotlib==3.10.7
+# Road Map needs streamlit.components.v1.html and the type-ahead Location
+# dropdown (selectbox accept_new_options/filter_mode); keep at 1.66.1 or newer
 streamlit==1.66.1
+
+# Road Map front end: MapLibre GL JS 5.24.0 (BSD-3-Clause) is a JavaScript
+# library, not a pip package. It is vendored in dashboard/vendor/ and needs no
+# install. Base-map tiles load from https://tiles.openfreemap.org at runtime.
 
 # Development verification
 pytest==8.3.4

@@ -163,6 +163,16 @@ first within a priority. The model does not assign operational urgency.
   not authentication. Keep the demonstration bound to localhost.
 - Notify Plow Crew is a demonstration confirmation only. It contacts no crew,
   reserves no equipment, and saves no dispatch status.
+- Road Map embeds a MapLibre GL JS map (vendored under `dashboard/vendor/`,
+  following the where-the-plow approach) with OpenFreeMap tiles recoloured in
+  an iceberg-finder palette. Report locations are matched locally against
+  approximate St. John's street points in `config/streets.json` (the Location
+  field is a type-ahead dropdown of these streets that also accepts free text,
+  and close misspellings still match); a camera
+  marker per street opens the newest three photos with condition and review
+  status in text. It shows all saved reports, not only the session's, and
+  omits unrecognized locations and photos marked unsuitable. Only map tiles
+  are fetched externally; report data is never sent off the machine.
 
 #### Model uncertainty and evaluation status
 
@@ -277,7 +287,8 @@ It cannot establish current conditions outside the frame or after capture.
 
 Consider these only after validating the core classifier:
 
-- A map of reviewed observations with capture timestamps.
+- A map of reviewed observations with capture timestamps (a street-level
+  Road Map of saved reports is implemented; exact photo positions are not).
 - Before-and-after comparisons for the same camera view.
 - Additional Canadian camera viewpoints.
 - Weather context alongside visual observations.
@@ -336,11 +347,13 @@ Clearly identify any separate interface-only demonstration using fixed sample re
 | Path | Responsibility |
 | --- | --- |
 | app.py | Single-page dashboard entry point, initialization, and workspace routing |
-| components/ | Dashboard layout, report form, staff review, shared suggestions, and model cache |
+| components/ | Dashboard layout, report form, road map, staff review, shared suggestions, and model cache |
+| dashboard/ | Theme, Road Map template, and vendored MapLibre GL JS assets |
 | train.py | Training and validation entry point |
 | evaluate.py | Held-out evaluation and confusion matrix |
 | inference.py | Shared preprocessing and model loading |
 | config/labels.json | Verified class definitions and display mapping |
+| config/streets.json | Approximate St. John's street points for Road Map matching |
 | models/ | Model artifact and training metadata |
 | data/README.md | Dataset access, terms, and preparation instructions |
 | reviews/ | Local review metadata; excluded from version control |

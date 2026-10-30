@@ -11,6 +11,7 @@ from components.layout import render_page_heading, render_section_heading
 from components.photo import render_photo
 from components.suggestion import render_condition_title, show_results
 from components.report_history import open_my_report
+from components.road_map import street_names
 
 
 def start_new_report():
@@ -43,8 +44,12 @@ def render_report_form():
         render_section_heading("02", "Details & Analysis")
         st.caption("Add a location to make the report easier to find")
         with st.form("citizen_report", border=False):
-            location = st.text_input("Location (optional)", key="report_location", max_chars=200,
-                                     placeholder="Street, intersection, or nearby landmark")
+            location = st.selectbox("Location (optional)", street_names(), index=None, key="report_location",
+                                    accept_new_options=True,
+                                    placeholder="Start typing a street, intersection, or landmark",
+                                    help="Pick a St. John's street from the list to show the photo on the "
+                                         "Road Map. Small spelling mistakes still find the street.") or ""
+            location = location.strip()[:200]
             captured_at = st.text_input("Photo Taken At (optional)", key="report_capture_time",
                                         placeholder="2026-10-30T14:30:00-03:30",
                                         help="Include the timezone offset, or leave blank if unknown", max_chars=64)

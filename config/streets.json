@@ -1,0 +1,373 @@
+{
+  "version": "1",
+  "city": "St. John's, Newfoundland and Labrador",
+  "center": [
+    -52.73,
+    47.5615
+  ],
+  "note": "Approximate representative points from OpenStreetMap (ODbL) via a one-time Nominatim lookup. A point marks the street, not the exact photo position.",
+  "streets": [
+    {
+      "name": "Aberdeen Avenue",
+      "lat": 47.61851,
+      "lon": -52.7172
+    },
+    {
+      "name": "Airport Road",
+      "lat": 47.60325,
+      "lon": -52.73979
+    },
+    {
+      "name": "Allandale Road",
+      "lat": 47.57472,
+      "lon": -52.72674
+    },
+    {
+      "name": "Anspach Street",
+      "lat": 47.54079,
+      "lon": -52.74771
+    },
+    {
+      "name": "Bannerman Road",
+      "lat": 47.57205,
+      "lon": -52.70721
+    },
+    {
+      "name": "Bay Bulls Road",
+      "lat": 47.49699,
+      "lon": -52.76491
+    },
+    {
+      "name": "Blackhead Road",
+      "lat": 47.51674,
+      "lon": -52.70984
+    },
+    {
+      "name": "Blackmarsh Road",
+      "lat": 47.53326,
+      "lon": -52.77668
+    },
+    {
+      "name": "Bonaventure Avenue",
+      "lat": 47.56872,
+      "lon": -52.71496
+    },
+    {
+      "name": "Brookfield Road",
+      "lat": 47.50603,
+      "lon": -52.7856
+    },
+    {
+      "name": "Canada Drive",
+      "lat": 47.52907,
+      "lon": -52.76814
+    },
+    {
+      "name": "Carpasian Road",
+      "lat": 47.57465,
+      "lon": -52.71505
+    },
+    {
+      "name": "Circular Road",
+      "lat": 47.57406,
+      "lon": -52.7059
+    },
+    {
+      "name": "Cochrane Street",
+      "lat": 47.57085,
+      "lon": -52.704
+    },
+    {
+      "name": "Columbus Drive",
+      "lat": 47.54725,
+      "lon": -52.74636
+    },
+    {
+      "name": "Commonwealth Avenue",
+      "lat": 47.50476,
+      "lon": -52.78889
+    },
+    {
+      "name": "Cornwall Avenue",
+      "lat": 47.54378,
+      "lon": -52.73423
+    },
+    {
+      "name": "Cowan Avenue",
+      "lat": 47.53191,
+      "lon": -52.7598
+    },
+    {
+      "name": "Craigmillar Avenue",
+      "lat": 47.54461,
+      "lon": -52.72934
+    },
+    {
+      "name": "Duckworth Street",
+      "lat": 47.56291,
+      "lon": -52.70926
+    },
+    {
+      "name": "Elizabeth Avenue",
+      "lat": 47.57531,
+      "lon": -52.72353
+    },
+    {
+      "name": "Empire Avenue",
+      "lat": 47.5669,
+      "lon": -52.72767
+    },
+    {
+      "name": "Forest Road",
+      "lat": 47.57837,
+      "lon": -52.68937
+    },
+    {
+      "name": "Fort Amherst Road",
+      "lat": 47.5605,
+      "lon": -52.6845
+    },
+    {
+      "name": "Frecker Drive",
+      "lat": 47.53807,
+      "lon": -52.76057
+    },
+    {
+      "name": "Freshwater Road",
+      "lat": 47.56331,
+      "lon": -52.7267
+    },
+    {
+      "name": "Gower Street",
+      "lat": 47.56827,
+      "lon": -52.7052
+    },
+    {
+      "name": "Hamilton Avenue",
+      "lat": 47.55084,
+      "lon": -52.72487
+    },
+    {
+      "name": "Hamlyn Road",
+      "lat": 47.53523,
+      "lon": -52.75412
+    },
+    {
+      "name": "Harbour Drive",
+      "lat": 47.56267,
+      "lon": -52.70724
+    },
+    {
+      "name": "Harvey Road",
+      "lat": 47.56562,
+      "lon": -52.71135
+    },
+    {
+      "name": "Hebron Way",
+      "lat": 47.61352,
+      "lon": -52.73078
+    },
+    {
+      "name": "Higgins Line",
+      "lat": 47.59463,
+      "lon": -52.72768
+    },
+    {
+      "name": "Kenmount Road",
+      "lat": 47.55829,
+      "lon": -52.75584
+    },
+    {
+      "name": "Kenna's Hill",
+      "lat": 47.5807,
+      "lon": -52.6982
+    },
+    {
+      "name": "Kings Bridge Road",
+      "lat": 47.57228,
+      "lon": -52.70199
+    },
+    {
+      "name": "Larkhall Street",
+      "lat": 47.56653,
+      "lon": -52.75205
+    },
+    {
+      "name": "LeMarchant Road",
+      "lat": 47.55148,
+      "lon": -52.72566
+    },
+    {
+      "name": "Logy Bay Road",
+      "lat": 47.60505,
+      "lon": -52.69116
+    },
+    {
+      "name": "Long's Hill",
+      "lat": 47.56475,
+      "lon": -52.71184
+    },
+    {
+      "name": "Major's Path",
+      "lat": 47.60289,
+      "lon": -52.73761
+    },
+    {
+      "name": "Merrymeeting Road",
+      "lat": 47.56501,
+      "lon": -52.72068
+    },
+    {
+      "name": "Military Road",
+      "lat": 47.56732,
+      "lon": -52.70936
+    },
+    {
+      "name": "Mount Scio Road",
+      "lat": 47.57192,
+      "lon": -52.75685
+    },
+    {
+      "name": "Mundy Pond Road",
+      "lat": 47.55277,
+      "lon": -52.73996
+    },
+    {
+      "name": "New Gower Street",
+      "lat": 47.5599,
+      "lon": -52.71296
+    },
+    {
+      "name": "Newfoundland Drive",
+      "lat": 47.59758,
+      "lon": -52.69625
+    },
+    {
+      "name": "Old Pennywell Road",
+      "lat": 47.55452,
+      "lon": -52.75612
+    },
+    {
+      "name": "Outer Ring Road",
+      "lat": 47.55194,
+      "lon": -52.83244
+    },
+    {
+      "name": "Paton Street",
+      "lat": 47.5667,
+      "lon": -52.73989
+    },
+    {
+      "name": "Patrick Street",
+      "lat": 47.5536,
+      "lon": -52.71725
+    },
+    {
+      "name": "Pennywell Road",
+      "lat": 47.55946,
+      "lon": -52.72728
+    },
+    {
+      "name": "Pippy Place",
+      "lat": 47.55731,
+      "lon": -52.76853
+    },
+    {
+      "name": "Portugal Cove Road",
+      "lat": 47.59197,
+      "lon": -52.72384
+    },
+    {
+      "name": "Prescott Street",
+      "lat": 47.5677,
+      "lon": -52.70712
+    },
+    {
+      "name": "Prince Philip Drive",
+      "lat": 47.5752,
+      "lon": -52.735
+    },
+    {
+      "name": "Quidi Vidi Road",
+      "lat": 47.5742,
+      "lon": -52.69731
+    },
+    {
+      "name": "Rennie's Mill Road",
+      "lat": 47.573,
+      "lon": -52.709
+    },
+    {
+      "name": "Ropewalk Lane",
+      "lat": 47.55567,
+      "lon": -52.73595
+    },
+    {
+      "name": "Ruby Line",
+      "lat": 47.48911,
+      "lon": -52.77955
+    },
+    {
+      "name": "Signal Hill Road",
+      "lat": 47.57058,
+      "lon": -52.68296
+    },
+    {
+      "name": "Southside Road",
+      "lat": 47.53869,
+      "lon": -52.72914
+    },
+    {
+      "name": "Stavanger Drive",
+      "lat": 47.61795,
+      "lon": -52.70456
+    },
+    {
+      "name": "Team Gushue Highway",
+      "lat": 47.50129,
+      "lon": -52.78908,
+      "aliases": [
+        "Team Gushue",
+        "Crosstown Arterial"
+      ]
+    },
+    {
+      "name": "The Boulevard",
+      "lat": 47.58115,
+      "lon": -52.69646,
+      "aliases": [
+        "Boulevard"
+      ]
+    },
+    {
+      "name": "Thorburn Road",
+      "lat": 47.57161,
+      "lon": -52.82347
+    },
+    {
+      "name": "Topsail Road",
+      "lat": 47.52675,
+      "lon": -52.7654
+    },
+    {
+      "name": "Torbay Road",
+      "lat": 47.59625,
+      "lon": -52.7101
+    },
+    {
+      "name": "Water Street",
+      "lat": 47.56534,
+      "lon": -52.70581
+    },
+    {
+      "name": "Waterford Bridge Road",
+      "lat": 47.54001,
+      "lon": -52.73006
+    },
+    {
+      "name": "Wishingwell Road",
+      "lat": 47.56175,
+      "lon": -52.7384
+    }
+  ]
+}
