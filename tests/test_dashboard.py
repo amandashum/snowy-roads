@@ -585,11 +585,14 @@ def test_outcomes_require_reason_without_overwriting_report(storage, action):
     assert updated["activity"][-1]["action"] == action
     assert updated["activity"][-1]["note"] == "Staff verified outcome"
     assert matches_filter(updated, "Closed") == (action in reports.CLOSED_ACTIONS)
+    assert matches_filter(updated, "Reviewed") == (action not in reports.CLOSED_ACTIONS)
+    assert matches_filter(updated, "All")
     assert matches_filter(updated, "Reassessment") == (action == "reassess")
     assert bool(priority_situations([updated])) == (action not in reports.CLOSED_ACTIONS)
     reopened = reports.review_report(record["record_id"], dict(payload, action="reassess", staff_note="New snow reported"))
     assert matches_filter(reopened, "Reassessment")
     assert not matches_filter(reopened, "Closed")
+    assert matches_filter(reopened, "Reviewed")
 
 
 def test_location_grouping_preserves_separate_reports():
@@ -707,6 +710,13 @@ def test_closed_report_delete_confirmation_and_cancel(storage):
     assert not any(button.key == f"delete_report_{identifier}" for button in app.button)
     reports.review_report(identifier, {"staff_class": "light", "priority": "routine",
                                        "action": "resolved", "staff_note": "Resolved"})
+    app.segmented_control[0].set_value("Reviewed").run()
+    assert not app.exception
+    assert not any(widget.key == "selected_report" for widget in app.selectbox)
+    assert not any(button.key == f"delete_report_{identifier}" for button in app.button)
+    app.segmented_control[0].set_value("All").run()
+    assert app.selectbox(key="selected_report").value == identifier
+    assert not any(button.key == f"delete_report_{identifier}" for button in app.button)
     app.segmented_control[0].set_value("Closed").run()
     app.button(key=f"delete_report_{identifier}").click().run()
     assert any("cannot be undone" in warning.value for warning in app.warning)

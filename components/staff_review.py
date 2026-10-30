@@ -264,7 +264,7 @@ def render_staff_review():
             render_observation(record)
             st.divider()
             render_review_choice(record, identifiers)
-            if record.get("action") in reports.CLOSED_ACTIONS:
+            if filter_name == "Closed" and record.get("action") in reports.CLOSED_ACTIONS:
                 if st.button("Delete report", key=f"delete_report_{selected}", icon=":material/delete:"):
                     st.session_state.delete_requested = selected
                 if st.session_state.get("delete_requested") == selected:
@@ -281,7 +281,8 @@ def matches_filter(record, filter_name):
     if filter_name == "Pending":
         return record["review_status"] == "pending"
     if filter_name == "Reviewed":
-        return record["review_status"] != "pending"
+        return (record["review_status"] != "pending"
+                and record.get("action") not in reports.CLOSED_ACTIONS)
     if filter_name == "Reassessment":
         return record.get("action") == "reassess"
     if filter_name == "Closed":

@@ -106,8 +106,9 @@ Staff can choose **Monitoring conditions**, **Needs reassessment**, **Resolved**
 **Plowing completed**, with a short reason required when saving these outcomes.
 Resolved closes the report without asserting plowing occurred; Plowing completed
 records staff confirmation. Both leave the active priority panel and remain in
-the **Closed** and **Reviewed** queues. A later reassessment reopens the report.
-Staff can permanently delete an individual closed report after confirming the
+the **Closed** queue, excluded from **Reviewed**. The **All** filter still includes
+closed reports. A later reassessment reopens the report and returns it to **Reviewed**.
+Only the **Closed** view offers deletion. Staff can permanently delete an individual closed report after confirming the
 action. This removes its local record, photo, notes, and activity history; it
 also removes the report from My Reports. Deletion cannot be undone.
 The **Reassessment** filter and count highlight reports needing another assessment.
