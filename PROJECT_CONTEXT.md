@@ -1,6 +1,20 @@
-# Snow-Covered Road Classifier
+# Project Context
 
-## Current direction and implementation status
+Snow-Covered Road Classifier
+
+## Project Summary
+
+Citizens submit road photographs with optional location and capture time.
+Municipal staff review the suggested visible condition, assign priority,
+and record the next action. Citizens can follow their reports within the
+current browser session through My Reports.
+
+The tool supports winter road monitoring through structured visual observations.
+It does not determine road safety or replace operational assessments.
+
+**Core workflow:** Submit photo → suggest visible condition → staff assessment → monitor, reassess, or close.
+
+### Current direction and implementation status
 
 Version: 1.3
 Date: October 30, 2026
@@ -32,7 +46,7 @@ automatic retraining, dispatch, authentication, or public deployment.
 This document distinguishes implemented behavior from evaluation goals and
 historical planning. Setup and run commands are documented in [README.md](README.md).
 
-### Immediate next steps
+#### Immediate next steps
 
 1. Review held-out evaluation metrics and confused class pairs.
 2. Inspect incorrect predictions and representative phone photos.
@@ -44,19 +58,7 @@ An uncertainty threshold has not been selected. ImageNet center cropping
 is shared across training and inference; it is not road-region detection.
 Model scores do not establish road safety or operational urgency.
 
-## 1. Product summary
-
-Citizens submit road photographs with optional location and capture time.
-Municipal staff review the suggested visible condition, assign priority,
-and record the next action. Citizens can follow their reports within the
-current browser session through My Reports.
-
-The tool supports winter road monitoring through structured visual observations.
-It does not determine road safety or replace operational assessments.
-
-**Core workflow:** Submit photo → suggest visible condition → staff assessment → monitor, reassess, or close.
-
-## 2. Problem statement
+## Problem Being Solved
 
 Winter road photographs provide useful observations, but each image still
 requires interpretation and a clear follow-up decision. Reviewers need to
@@ -71,7 +73,23 @@ improved consistency are intended benefits, not demonstrated outcomes.
 A photograph cannot establish road safety, detect every hazard, or guarantee
 that conditions remain unchanged after capture.
 
-### Solution methodology
+## Main Users
+
+Primary reviewers are municipal winter maintenance staff and road-condition
+reviewers. Citizens submit observations and follow their session's reports.
+
+The prototype aims to:
+
+- Reduce repetitive image sorting.
+- Present consistent condition labels.
+- Keep each suggestion connected to its source image.
+- Let staff confirm or correct suggestions.
+
+These benefits are hypotheses requiring evaluation.
+
+## Current Scope
+
+#### Solution methodology
 
 1. **Prepare the data.** Use the original four dataset classes: `clear`,
    `light`, `medium`, and `plowed`. Inspect labels and distributions, separate
@@ -101,7 +119,7 @@ that conditions remain unchanged after capture.
    layout and keyboard access separately. Operational benefits require
    evidence beyond automated tests.
 
-### Implemented report lifecycle
+#### Implemented report lifecycle
 
 | View         | Included reports                                         |
 | ------------ | -------------------------------------------------------- |
@@ -126,7 +144,7 @@ Priority Situations contains assessed, open reports with staff-assigned
 priority: Urgent assessment, Assess soon, then Routine, with newest reviews
 first within a priority. The model does not assign operational urgency.
 
-### Current interaction and data boundaries
+#### Current interaction and data boundaries
 
 - Report a Condition previews a photo before submission. Analyze Photo saves
   it and opens the result dialog. Repeating an unchanged submission reopens
@@ -146,7 +164,7 @@ first within a priority. The model does not assign operational urgency.
 - Notify Plow Crew is a demonstration confirmation only. It contacts no crew,
   reserves no equipment, and saves no dispatch status.
 
-### Model uncertainty and evaluation status
+#### Model uncertainty and evaluation status
 
 The result dialog uses provisional display rules: a top score below 70 percent
 or a top-two gap below 15 percentage points marks the result as possible and
@@ -162,23 +180,9 @@ accuracy, operational benefit, or browser accessibility. Held-out evaluation
 review, leakage audits, usage-term verification, representative phone-photo
 assessment, and manual interface checks remain necessary.
 
-## 3. Target users and value
+### Minimum viable product requirements
 
-Primary reviewers are municipal winter maintenance staff and road-condition
-reviewers. Citizens submit observations and follow their session's reports.
-
-The prototype aims to:
-
-- Reduce repetitive image sorting.
-- Present consistent condition labels.
-- Keep each suggestion connected to its source image.
-- Let staff confirm or correct suggestions.
-
-These benefits are hypotheses requiring evaluation.
-
-## 4. Minimum viable product
-
-### Feature 1: Upload a road image
+#### Feature 1: Upload a road image
 
 - Accept one JPEG or PNG image at a time.
 - Limit uploads to 10 MB.
@@ -190,7 +194,7 @@ These benefits are hypotheses requiring evaluation.
 - Never infer capture time from upload time.
 - Include sample images only when redistribution terms permit.
 
-### Feature 2: Classify the visible road condition
+#### Feature 2: Classify the visible road condition
 
 - Run a trained image classifier on the uploaded image.
 - Apply the same preprocessing used during training.
@@ -203,7 +207,7 @@ These benefits are hypotheses requiring evaluation.
 A confidence threshold alone cannot reliably detect unrelated images.
 The MVP must not promise automatic rejection of every unsuitable image.
 
-### Feature 3: Display the result for staff review
+#### Feature 3: Display the result for staff review
 
 Display:
 
@@ -224,58 +228,66 @@ Staff can:
 Preserve the original model suggestion separately from the staff decision.
 Do not automatically retrain the model using staff corrections.
 
-## 5. Classification labels
+### Review record
 
-**Do not invent dataset label meanings.**
+Store these fields for each submitted review:
 
-Use the Montréal dataset's original four classes after inspecting its files and documentation.
-Record exact class identifiers, definitions, and example images before training.
-
-Create a versioned label mapping with these fields:
-
-| Field | Purpose |
+| Field | Description |
 | --- | --- |
-| class_id | Original dataset identifier |
-| source_label | Original dataset label |
-| display_label | Plain-language interface label |
-| definition | Visual criteria for the class |
-| example_reference | Representative permitted image |
+| record_id | Unique local record identifier |
+| image_reference | Local image identifier, when retained |
+| uploaded_at | Upload timestamp |
+| captured_at | Supplied capture timestamp or null |
+| location | Supplied location or null |
+| predicted_class | Original model class identifier |
+| class_scores | Model scores, when available |
+| model_version | Model artifact identifier |
+| label_mapping_version | Class-definition version |
+| review_status | Pending, confirmed, corrected, or inconclusive |
+| staff_class | Staff-selected class or null |
+| unsuitable | Whether staff marked the image unsuitable |
+| staff_note | Optional review note |
+| reviewed_at | Review timestamp or null |
+| inference_status | Whether model analysis was available |
+| uncertain | Model uncertainty flag; null without a configured threshold |
+| priority | Staff-assigned priority; initially unassigned |
+| action | Staff-selected next action or closing outcome |
+| activity | Receipt, analysis, and saved staff-review events |
 
-Use the original four Montréal classes throughout training, evaluation, inference, and staff review.
-Display labels must preserve the original class meanings.
-Do not replace these classes with a new three-class scheme.
+Staff confirmation records a reviewed observation, not a verified declaration of road safety.
 
-Keep `uncertain`, `unsuitable`, and `inconclusive` separate from the trained condition classes.
+## Out of Scope
 
-## 6. Dataset plan
+Exclude these capabilities from the MVP:
 
-### Selected dataset: Montréal Snow-Covered Roads Dataset
+- Live camera integration.
+- Automatic road closure decisions.
+- Safe-route recommendations.
+- Snow-depth or friction estimation.
+- Reliable black-ice detection.
+- Snowplow routing or fleet allocation.
+- Storm forecasting.
+- Automatic public alerts.
+- Production authentication and multi-user operations.
 
-The project will use this dataset exclusively for MVP training, validation, and testing.
+Image classification describes appearance within an image.
+It cannot establish current conditions outside the frame or after capture.
 
-Source: https://github.com/modraa-pixels/Snow-Covered-Roads-Dataset
+### Future extensions
 
-The repository describes over 40,000 annotated traffic-camera images from Montréal's 2022 winter season.
-It describes four road-cover states and includes daytime and nighttime observations.
-Its annotations were generated through an automated annotation framework.
+Consider these only after validating the core classifier:
 
-Before use:
+- A map of reviewed observations with capture timestamps.
+- Before-and-after comparisons for the same camera view.
+- Additional Canadian camera viewpoints.
+- Weather context alongside visual observations.
+- A reviewed dataset for later model improvement.
 
-1. Confirm downloads contain usable images and labels.
-2. Inspect the exact four classes and their distributions.
-3. Review usage, attribution, and redistribution terms.
-4. Manually inspect samples from every class.
-5. Identify camera, sequence, and timestamp metadata where available.
-6. Document missing metadata and label ambiguity.
+## Project Classification
 
-Public repository access does not establish unrestricted image reuse.
-Do not commit raw dataset images into the project repository by default.
+Personal project workspace. Existing project context: CanAI climate and emergency response hackathon MVP.
 
-Dataset selection is settled.
-Implementation must verify access, usage terms, and exact class definitions.
-If access fails, document the blocker and resolve Montréal dataset access before training.
-
-## 7. Technical approach
+## Tech Stack
 
 ### Proposed default stack
 
@@ -317,7 +329,9 @@ Avoid camera-specific crops unless the interface explicitly supports those camer
 Do not invent predictions when the model is unavailable.
 Clearly identify any separate interface-only demonstration using fixed sample results.
 
-## 8. Suggested project structure
+## Repository Structure
+
+### Documented project structure
 
 | Path | Responsibility |
 | --- | --- |
@@ -334,35 +348,109 @@ Clearly identify any separate interface-only demonstration using fixed sample re
 
 Keep downloaded datasets, uploaded images, and generated reviews outside version control.
 
-## 9. Review record
+## Important Decisions
 
-Store these fields for each submitted review:
+### Classification labels
 
-| Field | Description |
+**Do not invent dataset label meanings.**
+
+Use the Montréal dataset's original four classes after inspecting its files and documentation.
+Record exact class identifiers, definitions, and example images before training.
+
+Create a versioned label mapping with these fields:
+
+| Field | Purpose |
 | --- | --- |
-| record_id | Unique local record identifier |
-| image_reference | Local image identifier, when retained |
-| uploaded_at | Upload timestamp |
-| captured_at | Supplied capture timestamp or null |
-| location | Supplied location or null |
-| predicted_class | Original model class identifier |
-| class_scores | Model scores, when available |
-| model_version | Model artifact identifier |
-| label_mapping_version | Class-definition version |
-| review_status | Pending, confirmed, corrected, or inconclusive |
-| staff_class | Staff-selected class or null |
-| unsuitable | Whether staff marked the image unsuitable |
-| staff_note | Optional review note |
-| reviewed_at | Review timestamp or null |
-| inference_status | Whether model analysis was available |
-| uncertain | Model uncertainty flag; null without a configured threshold |
-| priority | Staff-assigned priority; initially unassigned |
-| action | Staff-selected next action or closing outcome |
-| activity | Receipt, analysis, and saved staff-review events |
+| class_id | Original dataset identifier |
+| source_label | Original dataset label |
+| display_label | Plain-language interface label |
+| definition | Visual criteria for the class |
+| example_reference | Representative permitted image |
 
-Staff confirmation records a reviewed observation, not a verified declaration of road safety.
+Use the original four Montréal classes throughout training, evaluation, inference, and staff review.
+Display labels must preserve the original class meanings.
+Do not replace these classes with a new three-class scheme.
 
-## 10. Validation plan
+Keep `uncertain`, `unsuitable`, and `inconclusive` separate from the trained condition classes.
+
+### Dataset plan
+
+#### Selected dataset: Montréal Snow-Covered Roads Dataset
+
+The project will use this dataset exclusively for MVP training, validation, and testing.
+
+Source: https://github.com/modraa-pixels/Snow-Covered-Roads-Dataset
+
+The repository describes over 40,000 annotated traffic-camera images from Montréal's 2022 winter season.
+It describes four road-cover states and includes daytime and nighttime observations.
+Its annotations were generated through an automated annotation framework.
+
+Before use:
+
+1. Confirm downloads contain usable images and labels.
+2. Inspect the exact four classes and their distributions.
+3. Review usage, attribution, and redistribution terms.
+4. Manually inspect samples from every class.
+5. Identify camera, sequence, and timestamp metadata where available.
+6. Document missing metadata and label ambiguity.
+
+Public repository access does not establish unrestricted image reuse.
+Do not commit raw dataset images into the project repository by default.
+
+Dataset selection is settled.
+Implementation must verify access, usage terms, and exact class definitions.
+If access fails, document the blocker and resolve Montréal dataset access before training.
+
+### Instructions for AI coding tools
+
+Implement the three-feature MVP before adding extensions.
+Use the Montréal dataset exclusively for MVP training, validation, and testing.
+Verify its four classes before writing interface labels.
+Keep model inference separate from interface code.
+Use one preprocessing implementation for evaluation and inference.
+Preserve staff decisions separately from model suggestions.
+Never fabricate scores, metrics, labels, timestamps, or trained model artifacts.
+Keep assumptions, unavailable dependencies, and changed scope visible in README.md.
+
+### Original ten-hour implementation plan (historical)
+
+This is the historical hackathon schedule, not the current completion status.
+See the implementation status and immediate next steps above for current work.
+
+| Time | Work | Completion evidence |
+| --- | --- | --- |
+| Hours 0–1 | Verify dataset access, labels, terms, and samples | Montréal access confirmed and label mapping |
+| Hours 1–2 | Prepare a subset and separated splits | Split manifest and class counts |
+| Hours 2–4 | Train the baseline classifier | Saved model and validation results |
+| Hours 4–6 | Build upload and inference interface | Working image-to-label flow |
+| Hours 6–7 | Add staff review and local records | Confirmed and corrected example records |
+| Hours 7–8 | Evaluate held-out images and failure cases | Metrics and confusion matrix |
+| Hours 8–9 | Improve usability and document limitations | Runnable README and interface checks |
+| Hours 9–10 | Rehearse the demonstration | Repeatable demonstration script |
+
+If Montréal dataset access fails during hour one, prioritize resolving access and document the schedule impact.
+If training fails, deliver an honestly labeled interface prototype rather than fabricated model performance.
+
+## Constraints
+
+Target WCAG 2.2 AA in the interface without claiming compliance before assessment.
+Support keyboard operation, visible focus, descriptive controls, and readable error messages.
+Never communicate condition or review status through color alone.
+
+Avoid collecting names or other unnecessary personal information.
+Strip embedded image metadata before retaining uploaded images.
+Keep supplied location separate from embedded metadata.
+Use permitted, anonymized images for public demonstrations.
+The implemented prototype retains submitted photos and reports locally across
+app restarts. My Reports membership is session-scoped; stored photos are not.
+Check Another Photo resets the submission form without deleting saved reports.
+Confirmed deletion is available for individual closed reports only.
+
+## Approval Boundaries
+
+Follow Amanda's applicable Change Control Policy and project instructions. This context document does not grant implementation, deployment, publication, or data-transfer approval.
+
+## Validation
 
 ### Data separation
 
@@ -393,7 +481,7 @@ Verify valid images, corrupt files, oversized files, missing metadata, and unava
 Verify staff confirmation, correction, unsuitable flags, and saved record integrity.
 Confirm keyboard access, readable labels, and text-based status indicators.
 
-## 11. Acceptance criteria
+### Acceptance criteria
 
 The MVP is complete when:
 
@@ -407,26 +495,7 @@ The MVP is complete when:
 - Evaluation includes held-out results and known limitations.
 - README instructions let another developer run the demo.
 
-## 12. Original ten-hour implementation plan
-
-This is the historical hackathon schedule, not the current completion status.
-See the implementation status and immediate next steps above for current work.
-
-| Time | Work | Completion evidence |
-| --- | --- | --- |
-| Hours 0–1 | Verify dataset access, labels, terms, and samples | Montréal access confirmed and label mapping |
-| Hours 1–2 | Prepare a subset and separated splits | Split manifest and class counts |
-| Hours 2–4 | Train the baseline classifier | Saved model and validation results |
-| Hours 4–6 | Build upload and inference interface | Working image-to-label flow |
-| Hours 6–7 | Add staff review and local records | Confirmed and corrected example records |
-| Hours 7–8 | Evaluate held-out images and failure cases | Metrics and confusion matrix |
-| Hours 8–9 | Improve usability and document limitations | Runnable README and interface checks |
-| Hours 9–10 | Rehearse the demonstration | Repeatable demonstration script |
-
-If Montréal dataset access fails during hour one, prioritize resolving access and document the schedule impact.
-If training fails, deliver an honestly labeled interface prototype rather than fabricated model performance.
-
-## 13. Demonstration script
+### Demonstration script
 
 1. Explain the manual road-image review problem.
 2. Upload a held-out image with a visible road.
@@ -440,55 +509,13 @@ Suggested pitch:
 
 “Our prototype helps municipal staff organize winter road photographs through suggested condition labels and human review.”
 
-## 14. Scope boundaries
+## Glossary
 
-Exclude these capabilities from the MVP:
-
-- Live camera integration.
-- Automatic road closure decisions.
-- Safe-route recommendations.
-- Snow-depth or friction estimation.
-- Reliable black-ice detection.
-- Snowplow routing or fleet allocation.
-- Storm forecasting.
-- Automatic public alerts.
-- Production authentication and multi-user operations.
-
-Image classification describes appearance within an image.
-It cannot establish current conditions outside the frame or after capture.
-
-## 15. Accessibility and privacy
-
-Target WCAG 2.2 AA in the interface without claiming compliance before assessment.
-Support keyboard operation, visible focus, descriptive controls, and readable error messages.
-Never communicate condition or review status through color alone.
-
-Avoid collecting names or other unnecessary personal information.
-Strip embedded image metadata before retaining uploaded images.
-Keep supplied location separate from embedded metadata.
-Use permitted, anonymized images for public demonstrations.
-The implemented prototype retains submitted photos and reports locally across
-app restarts. My Reports membership is session-scoped; stored photos are not.
-Check Another Photo resets the submission form without deleting saved reports.
-Confirmed deletion is available for individual closed reports only.
-
-## 16. Future extensions
-
-Consider these only after validating the core classifier:
-
-- A map of reviewed observations with capture timestamps.
-- Before-and-after comparisons for the same camera view.
-- Additional Canadian camera viewpoints.
-- Weather context alongside visual observations.
-- A reviewed dataset for later model improvement.
-
-## 17. Instructions for AI coding tools
-
-Implement the three-feature MVP before adding extensions.
-Use the Montréal dataset exclusively for MVP training, validation, and testing.
-Verify its four classes before writing interface labels.
-Keep model inference separate from interface code.
-Use one preprocessing implementation for evaluation and inference.
-Preserve staff decisions separately from model suggestions.
-Never fabricate scores, metrics, labels, timestamps, or trained model artifacts.
-Keep assumptions, unavailable dependencies, and changed scope visible in README.md.
+| Term | Meaning in this project |
+| --- | --- |
+| Model score | Classifier output; not a calibrated probability of correctness. |
+| Reassessment | An assessed report marked Needs reassessment; also included in Reviewed. |
+| Resolved | A closing outcome that does not assert plowing occurred. |
+| Plowing completed | A closing outcome recording staff confirmation of completed plowing. |
+| My Reports | Reports associated with the current browser session. |
+| MVP | Minimum viable product. |
