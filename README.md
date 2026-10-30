@@ -9,12 +9,17 @@ review. No automatic operational decision or dispatch is implemented.
 
 ### First-time Windows setup
 
-Install Python 3.13 with the Windows Python launcher (`py`). Extract or clone
+Install Python 3.13 with the Windows Python launcher (`py`) or select
+**Add Python to PATH** in the Python installer. Extract or clone
 the project, open PowerShell in its folder, and run:
 
 ```powershell
 .\setup.ps1
 ```
+
+The filename is `setup.ps1` (no space). PowerShell requires the `.\` prefix
+to run a script in the current folder: typing `setup.ps1` alone does not
+search that folder. Run the command from the folder containing this script.
 
 The script creates an isolated `.venv`, installs `requirements.txt`, checks
 dependencies, and verifies that the included checkpoint loads on CPU.

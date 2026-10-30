@@ -6,12 +6,24 @@ $environmentPath = Join-Path $projectRoot '.venv'
 $pythonPath = Join-Path $environmentPath 'Scripts\python.exe'
 $requirementsPath = Join-Path $projectRoot 'requirements.txt'
 
-if (-not (Test-Path -LiteralPath $environmentPath)) {
-    if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
-        throw 'Install Python 3.13 with the Windows Python launcher (py), then run setup.ps1 again.'
-    }
+if (-not (Test-Path -LiteralPath $requirementsPath -PathType Leaf)) {
+    throw 'requirements.txt is missing. Download or clone the complete repository, then run setup.ps1 again.'
+}
 
-    & py -3.13 -m venv $environmentPath
+if (-not (Test-Path -LiteralPath $environmentPath)) {
+    if (Get-Command py -ErrorAction SilentlyContinue) {
+        & py -3.13 -m venv $environmentPath
+    }
+    elseif (Get-Command python -ErrorAction SilentlyContinue) {
+        & python -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 13) else 1)'
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Python 3.13 is required. Install it and add it to PATH, then run setup.ps1 again.'
+        }
+        & python -m venv $environmentPath
+    }
+    else {
+        throw 'Install Python 3.13 with the Windows Python launcher (py) or add Python to PATH, then run setup.ps1 again.'
+    }
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not create .venv. Check that Python 3.13 is installed.'
     }
@@ -22,7 +34,7 @@ if (-not (Test-Path -LiteralPath $pythonPath)) {
 }
 
 # Preserve existing environments rather than silently replacing them
-& $pythonPath -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 13) and sys.prefix != sys.base_prefix and not __import__("site").ENABLE_USER_SITE else 1)'
+& $pythonPath -c 'import sys, site; sys.exit(0 if sys.version_info[:2] == (3, 13) and sys.prefix != sys.base_prefix and not site.ENABLE_USER_SITE else 1)'
 if ($LASTEXITCODE -ne 0) {
     throw 'Setup requires an isolated Python 3.13 environment. Rename the existing .venv, then run setup.ps1 again.'
 }
@@ -39,7 +51,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Push-Location -LiteralPath $projectRoot
 try {
-    & $pythonPath -c 'from inference import load_checkpoint; load_checkpoint("models/classifier.pt"); print("Checkpoint loaded successfully on CPU.")'
+    & $pythonPath -c "from inference import load_checkpoint; load_checkpoint('models/classifier.pt'); print('Checkpoint loaded successfully on CPU.')"
     if ($LASTEXITCODE -ne 0) {
         throw 'Model verification failed. Check the error above and ensure models/classifier.pt is present.'
     }
