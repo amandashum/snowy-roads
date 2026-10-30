@@ -33,6 +33,9 @@ the workspace selector provides navigation, not authentication.
 1. **Report a Condition:** upload a JPEG or PNG (up to 10 MB and 20 million
    pixels), optionally enter location and capture time, and select Analyze
    Photo. Previewing alone does not submit a report.
+   Location is a searchable dropdown: start typing and it suggests matching
+   St. John's streets, even with small spelling mistakes. You can still enter
+   an intersection or landmark that is not on the list.
    **Photo Taken At** is an optional 24-hour time picker with **Time Zone** beside
    it. Leave the time blank if unknown. Entering a time assumes today's date in
    the selected timezone and saves its corresponding UTC offset. The browser
@@ -42,7 +45,12 @@ the workspace selector provides navigation, not authentication.
 2. **My Reports:** see submissions from your current browser session, staff
    decisions, notes, and activity. Refresh status to read the latest review.
    Session membership is not restored after starting a new browser session.
-3. **Staff Review:** inspect the photo and suggestion, then confirm or correct
+3. **Road Map:** see an embedded MapLibre map of St. John's with a camera icon
+   on each street named in a report's location (for example, "Water Street"
+   or "water st"). Select a camera to see up to three of the newest photos
+   from that street with their condition and review status. Use the
+   bottom-right controls to zoom in, zoom out, or enlarge the map to full screen.
+4. **Staff Review:** inspect the photo and suggestion, then confirm or correct
    the condition. Use Review Details to set priority, action, and notes.
    Reports remain available for manual review if model analysis fails.
 
@@ -83,6 +91,16 @@ Notify Plow Crew shows demo feedback only; no crew is contacted or dispatched.
   cannot establish safety, urgency, snow depth, or reliable black-ice detection.
 - Staff notes are visible in My Reports. This prototype has no authentication
   or production multi-user controls.
+- Road Map shows photos from **all** saved reports, not only the current
+  session's. Locations are matched against the local street list in
+  `config/streets.json`; report text is never sent to a geocoding service.
+  A camera marks an approximate point on the named street, not the photo's
+  exact position. Reports without a recognized street, and photos staff marked
+  unsuitable, are not mapped.
+- The map uses MapLibre GL JS 5.24.0 (BSD-3-Clause), vendored in
+  `dashboard/vendor/`. Base-map tiles load from OpenFreeMap (OpenStreetMap
+  data), so the map background needs internet access; without it, markers and
+  popups still work on a plain background.
 
 ## Test the application
 
@@ -92,8 +110,10 @@ Notify Plow Crew shows demo feedback only; no crew is contacted or dispatched.
 
 Dashboard tests cover submissions, persistence, staff decisions, queue transitions,
 model-unavailable handling, and confirmed deletion. All 47 dashboard tests passed
-on October 30, 2026. This does not establish model accuracy or accessibility;
-browser layout and keyboard operation still need manual review.
+on October 30, 2026. Road Map tests cover street matching, marker grouping,
+popup status text, and workspace rendering. This does not establish model
+accuracy or accessibility; browser layout and keyboard operation still need
+manual review.
 
 ## Reproduce training and evaluation
 
@@ -164,11 +184,13 @@ necessary before making reliable performance claims.
 
 ```text
 app.py                  Streamlit entry point and workspace routing
-components/             Submission, history, staff review, and model display
+components/             Submission, history, road map, staff review, and model display
+dashboard/              Theme, map template, and vendored MapLibre assets
 reports.py              Upload validation and local report persistence
 inference.py            Model loading, preprocessing, and prediction
 train.py / evaluate.py  Training and held-out evaluation
 config/labels.json      Class definitions and display mapping
+config/streets.json     Approximate St. John's street points for the Road Map
 models/                 Checkpoint and training metadata
 ```
 

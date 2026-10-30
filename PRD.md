@@ -112,6 +112,7 @@ All requirements in this section belong to the MVP scope.
 | FR-14 | Show related observations | Match supplied location text after case and whitespace normalization. Keep reports independent; matching locations do not establish duplicate incidents or apply shared decisions. |
 | FR-15 | Restrict destructive deletion | Offer deletion only in Closed and require confirmation. Successful deletion removes the photo, record, notes, and activity, including the report's appearance in My Reports. Cancellation preserves the report. |
 | FR-16 | Identify simulated notification | Notify Plow Crew provides demonstration feedback only. It contacts no crew and records no dispatch status. |
+| FR-17 | Show reports on a St. John's map | Road Map embeds a MapLibre map with a camera marker on each known St. John's street named in a report's location, showing that street's report count. Selecting a marker opens a popup with up to three of the newest photos and their condition, time, and review status in text. Bottom-right controls zoom and enlarge the map. Location text is matched locally and never sent to a geocoder; the Location field suggests known streets as the user types (fuzzy filtering), still accepts free text, and close misspellings of a known street are matched. Unrecognized locations and photos marked unsuitable are not mapped. |
 
 ## 8. AI Behavior and Evaluation
 
@@ -197,8 +198,9 @@ automated workflow tests alone do not establish conformance.
 - Automatic alerts, crew dispatch, routing, or fleet allocation.
 - Automatic retraining from staff corrections.
 
-Maps, weather context, before-and-after comparisons, and additional
-camera sources are possible later extensions, subject to separate review.
+Weather context, before-and-after comparisons, and additional camera sources
+are possible later extensions, subject to separate review. A street-level
+report map (FR-17) is implemented; exact photo positions are not.
 
 ## 12. Acceptance and Validation
 
@@ -229,6 +231,7 @@ not record a new test run or acceptance result.
 | Scores may create false confidence | Keep limitations visible and require human review |
 | Workspace navigation may be mistaken for access control | Keep the demonstration local and explain its boundary |
 | Staff notes are visible to citizens in the prototype | Decide visibility rules before any production design |
+| Road Map shows every saved photo to any viewer | Decide public photo visibility and moderation before any production design |
 | Deletion is permanent | Preserve explicit confirmation and clearly describe the consequence |
 | Dataset and pretrained-weight terms need verification | Verify usage and redistribution permissions before sharing assets |
 | Performance and usability targets are unset | Agree on targets and measurement methods |

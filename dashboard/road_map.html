@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>__MAPLIBRE_CSS__</style>
+<style>
+    /* Iceberg-finder palette: bright ocean, pale land, deep-blue camera markers. */
+    :root { --ink: #142f50; --marker: #0f6ea8; --marker-dark: #0a4f7d; --water: #45b5ea; }
+    html, body { margin: 0; height: 100%; font-family: "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+    #map { position: absolute; inset: 0; background: #dff1fb; border-radius: 16px; overflow: hidden; }
+    :fullscreen #map, #map:fullscreen { border-radius: 0; }
+
+    .snowy-panel {
+        position: absolute; top: 12px; left: 12px; z-index: 2; max-width: 240px;
+        padding: 10px 14px; border-radius: 12px; background: rgba(18, 52, 90, 0.92); color: #edf5ff;
+        box-shadow: 0 6px 20px rgba(12, 37, 69, 0.25); font-size: 12px; line-height: 1.45;
+    }
+    .snowy-panel strong { display: block; font-size: 14px; letter-spacing: -0.02em; }
+    .popup-open .snowy-panel { opacity: 0; visibility: hidden; transition: opacity 150ms ease, visibility 150ms; }
+    .snowy-notice { margin-top: 6px; color: #ffd9a8; }
+
+    .camera-marker {
+        position: relative; display: grid; place-items: center; width: 46px; height: 46px;
+        border-radius: 50%; background: rgba(15, 110, 168, 0.28); cursor: pointer;
+    }
+    .camera-marker .core {
+        display: grid; place-items: center; gap: 0; width: 36px; height: 36px; border-radius: 50%;
+        background: var(--marker); border: 2px solid #fff; box-shadow: 0 3px 10px rgba(10, 60, 100, 0.35);
+        color: #fff; font: 700 11px/1 "Segoe UI", sans-serif; transition: transform 120ms ease;
+    }
+    .camera-marker svg { width: 16px; height: 16px; display: block; }
+    .camera-marker:hover .core, .camera-marker:focus-visible .core { transform: scale(1.1); background: var(--marker-dark); }
+    .camera-marker:focus-visible { outline: 3px solid #12345a; outline-offset: 2px; }
+
+    .maplibregl-popup-content {
+        padding: 14px 14px 12px; border-radius: 14px; box-shadow: 0 12px 36px rgba(12, 37, 69, 0.28);
+        font-family: "Segoe UI", system-ui, sans-serif; color: var(--ink);
+    }
+    .maplibregl-popup-close-button { font-size: 20px; width: 30px; height: 30px; color: #315778; }
+    .popup-title { margin: 0 24px 2px 0; font-size: 15px; font-weight: 750; letter-spacing: -0.02em; }
+    .popup-subtitle { margin: 0 0 10px; font-size: 11.5px; color: #526b86; }
+    .popup-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; max-height: 280px; overflow-y: auto; }
+    .popup-item { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: start; }
+    .popup-item img, .popup-item .no-photo {
+        width: 92px; height: 70px; object-fit: cover; border-radius: 8px; background: #edf4fc;
+        border: 1px solid #dce7f3;
+    }
+    .popup-item .no-photo { display: grid; place-items: center; font-size: 10px; color: #526b86; text-align: center; }
+    .popup-condition { margin: 0; font-size: 12.5px; font-weight: 700; }
+    .popup-time { margin: 2px 0 4px; font-size: 11px; color: #526b86; }
+    .status-chip {
+        display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 650;
+        border: 1px solid transparent;
+    }
+    .status-pending { background: #fff6e5; border-color: #f0c879; color: #7a4d00; }
+    .status-reviewed { background: #e8f1fc; border-color: #9fc0e6; color: #1e4e89; }
+    .status-reassess { background: #fff0f0; border-color: #e5aaaa; color: #9b1c13; }
+    .status-closed { background: #e9f6ee; border-color: #9bd1b0; color: #1f6a3c; }
+
+    .maplibregl-ctrl-group { border-radius: 10px; box-shadow: 0 4px 14px rgba(12, 37, 69, 0.22); }
+    .maplibregl-ctrl-group button { width: 34px; height: 34px; }
+</style>
+</head>
+<body>
+<div id="map" role="region" aria-label="Map of St. John's road reports"></div>
+<div class="snowy-panel" id="panel" aria-live="polite"></div>
+<script>__MAPLIBRE_JS__</script>
+<script>
+(() => {
+    const DATA = __MAP_DATA__;
+    const WATER = "#45b5ea";
+    const LAND = "#f6f8fa";
+    const CAMERA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"'
+        + ' stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>'
+        + '<circle cx="12" cy="13.5" r="3.5"/></svg>';
+    const FALLBACK_STYLE = { version: 8, sources: {}, layers: [
+        { id: "background", type: "background", paint: { "background-color": "#dff1fb" } }] };
+
+    const el = (tag, className, text) => {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+    };
+
+    const map = new maplibregl.Map({
+        container: "map",
+        style: "https://tiles.openfreemap.org/styles/positron",
+        center: DATA.center,
+        zoom: 12,
+        minZoom: 9,
+        maxZoom: 18,
+        attributionControl: { compact: true },
+        // Embedded maps should not hijack page scrolling; full screen restores free scroll zoom.
+        cooperativeGestures: true,
+    });
+
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+    map.addControl(new maplibregl.FullscreenControl({ container: document.body }), "bottom-right");
+
+    document.addEventListener("fullscreenchange", () => {
+        if (document.fullscreenElement) map.cooperativeGestures.disable();
+        else map.cooperativeGestures.enable();
+        setTimeout(() => map.resize(), 50);
+    });
+
+    let baseMapFailed = false;
+    map.on("style.load", () => {
+        const recolor = (id, property, value) => { if (map.getLayer(id)) map.setPaintProperty(id, property, value); };
+        recolor("background", "background-color", LAND);
+        recolor("water", "fill-color", WATER);
+        recolor("waterway", "line-color", WATER);
+        recolor("water_name_point_label", "text-color", "#ffffff");
+        recolor("water_name_point_label", "text-halo-color", "rgba(15, 110, 168, 0.6)");
+        recolor("water_name_line_label", "text-color", "#ffffff");
+        recolor("water_name_line_label", "text-halo-color", "rgba(15, 110, 168, 0.6)");
+    });
+    map.on("error", () => {
+        // Report markers are DOM elements, so they stay usable when tiles cannot load.
+        if (baseMapFailed || map.isStyleLoaded()) return;
+        baseMapFailed = true;
+        map.setStyle(FALLBACK_STYLE);
+        renderPanel("Street map tiles are unavailable. Report markers are still shown.");
+    });
+
+    function renderPanel(notice) {
+        const panel = document.getElementById("panel");
+        panel.replaceChildren();
+        panel.append(el("strong", "", "St. John's road reports"));
+        const streets = DATA.markers.length;
+        const total = DATA.markers.reduce((sum, marker) => sum + marker.count, 0);
+        panel.append(el("div", "", streets
+            ? `${total} report${total === 1 ? "" : "s"} on ${streets} street${streets === 1 ? "" : "s"}`
+            : "No mapped reports yet"));
+        panel.append(el("div", "", "Select a camera to see recent photos"));
+        if (notice) panel.append(el("div", "snowy-notice", notice));
+    }
+
+    function reportItem(report, street) {
+        const item = el("li", "popup-item");
+        if (report.thumbnail) {
+            const image = el("img");
+            image.src = report.thumbnail;
+            image.alt = `Road photo from ${street}, ${report.time}`;
+            image.loading = "lazy";
+            item.append(image);
+        } else {
+            item.append(el("div", "no-photo", "Photo unavailable"));
+        }
+        const details = el("div");
+        details.append(el("p", "popup-condition", report.condition));
+        details.append(el("p", "popup-time", `${report.time_label} ${report.time}`));
+        details.append(el("span", `status-chip status-${report.status_kind}`, report.status));
+        item.append(details);
+        return item;
+    }
+
+    function popupContent(marker) {
+        const root = el("div");
+        root.append(el("h2", "popup-title", marker.street));
+        const shown = marker.reports.length;
+        root.append(el("p", "popup-subtitle", marker.count > shown
+            ? `Latest ${shown} of ${marker.count} reports`
+            : `${marker.count} report${marker.count === 1 ? "" : "s"}`));
+        const list = el("ul", "popup-list");
+        marker.reports.forEach((report) => list.append(reportItem(report, marker.street)));
+        root.append(list);
+        return root;
+    }
+
+    const bounds = new maplibregl.LngLatBounds();
+    DATA.markers.forEach((marker) => {
+        const node = el("div", "camera-marker");
+        node.setAttribute("role", "button");
+        node.setAttribute("aria-label",
+            `${marker.street}: ${marker.count} report${marker.count === 1 ? "" : "s"}. Show recent photos`);
+        node.title = marker.street;
+        const core = el("div", "core");
+        core.innerHTML = CAMERA_SVG;
+        core.append(el("span", "", String(marker.count)));
+        node.append(core);
+        const popup = new maplibregl.Popup({ offset: 26, maxWidth: "320px", anchor: "bottom", focusAfterOpen: true })
+            .setDOMContent(popupContent(marker));
+        // Leave room above the camera so the whole popup stays inside the map.
+        popup.on("open", () => {
+            document.body.classList.add("popup-open");
+            map.easeTo({ center: [marker.lon, marker.lat],
+                offset: [0, Math.min(190, map.getContainer().offsetHeight / 2 - 40)], duration: 300 });
+        });
+        popup.on("close", () => document.body.classList.remove("popup-open"));
+        new maplibregl.Marker({ element: node }).setLngLat([marker.lon, marker.lat]).setPopup(popup).addTo(map);
+        bounds.extend([marker.lon, marker.lat]);
+    });
+
+    const fitReports = () => {
+        if (DATA.markers.length > 1) {
+            map.fitBounds(bounds, { padding: { top: 90, bottom: 50, left: 50, right: 70 }, maxZoom: 14, duration: 0 });
+        } else if (DATA.markers.length === 1) {
+            map.jumpTo({ center: [DATA.markers[0].lon, DATA.markers[0].lat], zoom: 14 });
+        }
+    };
+    fitReports();
+    // The iframe can finish sizing after construction, so fit again once the map is ready.
+    map.once("load", () => { map.resize(); fitReports(); });
+    renderPanel();
+})();
+</script>
+</body>
+</html>
