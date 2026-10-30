@@ -1,406 +1,185 @@
-# Snow-covered road classifier
+﻿# Snow-covered road classifier
 
-Local four-class ResNet-18 baseline for clear, light-covered,
-medium-to-heavy-covered, and plowed surfaces. Staff decide whether plowing
-is needed. A local Streamlit dashboard supports photo submission and staff
-review. No automatic operational decision or dispatch is implemented.
+A local prototype for submitting winter road photos and supporting municipal
+staff review. A ResNet-18 classifier suggests one of four visible conditions:
+`clear`, `light`, `medium`, or `plowed`. Staff confirm the observation, assign
+priority, and decide the next action.
 
-## Environment
+The app does not determine road safety or dispatch snowplows.
+See [project context](PROJECT_CONTEXT.md) for the problem statement, solution
+methodology, implemented workflows, evaluation goals, and original MVP plan.
 
-### First-time Windows setup
+## Quick start
 
-Install Python 3.13 with the Windows Python launcher (`py`) or select
-**Add Python to PATH** in the Python installer. Extract or clone
-the project, open PowerShell in its folder, and run:
+Install **Python 3.13** with the Windows Python launcher (`py`) or Python on
+PATH. Open PowerShell in the project folder and run:
 
 ```powershell
 .\setup.ps1
-```
-
-The filename is `setup.ps1` (no space). PowerShell requires the `.\` prefix
-to run a script in the current folder: typing `setup.ps1` alone does not
-search that folder. Run the command from the folder containing this script.
-
-The script creates an isolated `.venv`, installs `requirements.txt`, checks
-dependencies, and verifies that the included checkpoint loads on CPU.
-Internet access is required to install packages. No dataset or retraining
-is needed. Environment activation is not required.
-
-If PowerShell blocks script execution, use this invocation for this run:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
-```
-
-Setup preserves existing environments. If it reports an incompatible or
-non-isolated `.venv`, rename that folder before rerunning setup. Do not
-commit or distribute `.venv`; each computer creates its own.
-
-### Existing development environment
-
-Python 3.13 with versions recorded in requirements.txt. The verified local
-environment has torch 2.9.0+cu128 and torchvision 0.24.0+cu128; requirements
-record their base versions so they do not force CUDA on other machines.
-Choose the appropriate PyTorch CPU/CUDA build for your hardware before
-installing remaining requirements. Streamlit 1.66.1 is installed in the local
-`.venv`, which inherits the existing PyTorch environment. Its dependencies
-are installed locally; NumPy and Pillow match requirements.txt.
-
-## Run the dashboard
-
-The trained checkpoint is included at `models/classifier.pt`. After installing
-the dependencies, you can run the dashboard without downloading the dataset
-or retraining the model. Dataset preparation and training below are only
-needed to reproduce or retrain the classifier.
-
-From the project directory:
-
-```powershell
 .venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Open the local URL printed by Streamlit (normally http://127.0.0.1:8501).
-Use **Report a Condition** to drag and drop a JPEG/PNG into the upload area
-or use the upload button to browse, then preview and submit it with optional location
-and capture time. **Analyze Photo** saves the report and opens a **Road Condition Analysis**
-dialog with the detected condition highlighted and all four relative match scores
-displayed directly below it; these are not calibrated confidence percentages.
-The dialog uses provisional display rules: a top score below 70% or a gap
-between the top two scores below 15 percentage points adds “Possible” to the
-condition heading and “Results are mixed. Saved for staff review.” For reports
-already reviewed, the note says “Staff review recorded.” Clearer results show
-“AI assessment” in small italic text without the mixed-result note, keeping the
-condition heading unchanged. These rules are not validated
-confidence thresholds and do not change saved model uncertainty. Every report
-still enters the staff queue; no result automatically bypasses staff review.
-Technical model identifiers remain in the saved record. Close the dialog with
-**Done** or reopen it with **View Results** without running analysis again.
-If analysis is unavailable, the dialog confirms that the photo is saved for review.
-The upload workspace uses a compact photo preview (at most 180 pixels tall).
-**Open Full Photo** opens the original separately; analysis always uses the original upload.
-**Check Another Photo** clears the form without deleting saved reports. Repeating an
-unchanged submission reopens its existing results instead of creating a duplicate report.
-Use **Staff Review** to inspect saved reports, confirm or
-correct conditions, and record priority, notes, and action recommendations.
-The combined review panel shows the photo and AI suggestion together.
-**Yes — Confirm & Next** saves the suggested condition and opens the next report
-in the current view, keeping existing priority, next action, and notes.
-**No — Review Details** reveals condition, priority, action, and notes controls.
-Saved reviews also require **No — Review Details** to open the form. Reports
-without AI analysis show the form for manual review.
-The Priority Situations panel stretches alongside the review on desktop and stacks
-below it on mobile, with a scrollable report list.
-Staff photo previews are capped at 260 pixels tall. Saving an assessment immediately
-updates the queue and counts.
-The right-side **Priority Situations** panel lists reviewed reports with staff-assigned
-priority: Urgent assessment, Assess soon, then Routine. Newest reviews appear first
-within each level. Each entry shows a photo, location, capture time, review status,
-and recommended action. **Open assessment** reopens its saved review. Pending and
-unassigned reports remain outside this panel; model suggestions never assign priority.
-For reports recommending plowing, **Notify Plow Crew** opens a demo confirmation
-with an X close control. This previews notification feedback only; no crew is contacted,
-no snowplow is reserved, and no dispatch status is saved.
-After submission, **View my report** opens that specific report in **My Reports**.
-Choose **Show all my reports** to return to the session's full history.
-Staff can choose **Monitoring conditions**, **Needs reassessment**, **Resolved**, or
-**Plowing completed**, with a short reason required when saving these outcomes.
-Resolved closes the report without asserting plowing occurred; Plowing completed
-records staff confirmation. Both leave the active priority panel and remain in
-the **Closed** queue, excluded from **Reviewed**. The **All** filter still includes
-closed reports. A later reassessment reopens the report and returns it to **Reviewed**.
-Only the **Closed** view offers deletion. Staff can permanently delete an individual closed report after confirming the
-action. This removes its local record, photo, notes, and activity history; it
-also removes the report from My Reports. Deletion cannot be undone.
-The **Reassessment** filter and count highlight reports needing another assessment.
-Each saved decision and reason remains in the shared activity history.
-**Reports at this location** shows other photos and report numbers matching the
-location text after ignoring capitalization and extra spaces. Missing locations
-are not grouped; spelling variants and abbreviations are not inferred. These may
-be different incidents or dates. Opening or updating one report never updates its neighbors.
+Setup creates an isolated `.venv`, installs the pinned dependencies, checks
+for conflicts, and verifies that `models/classifier.pt` loads on CPU.
+Package installation requires internet access. The checkpoint is included;
+you do not need the dataset or retraining to run the dashboard.
 
-**My Reports** shows uploads from the current browser session with their full report
-number, retained photo, latest staff decision, and staff note. **Refresh status** reads
-the latest saved review. Starting another photo preserves this session's history;
-restarting the browser session does not restore it. This is a local demonstration,
-and staff notes are visible in the citizen report view.
-Citizen and staff views share the same saved activity log: actual submission receipt,
-AI analysis completion (a suggestion, not a maintenance decision), and each saved staff
-review. Times include the date and use each viewer's browser timezone, with UTC as
-the fallback when it is unavailable. Saved timestamps are unchanged. Older reports show only their
-known upload and latest review times; earlier events are not reconstructed. Plowing
-recommendations do not confirm dispatch or a service time.
-The mode selector is navigation, not authentication. Keep this demonstration
-bound to localhost.
+Open the local URL printed by Streamlit, normally `http://127.0.0.1:8501`.
+Press Ctrl+C in the terminal to stop it. Keep this demonstration on localhost:
+the workspace selector provides navigation, not authentication.
 
-Photos are normalized to PNG with embedded metadata removed and saved under
-`uploads/`; individual JSON records are stored under `reviews/`. Both are
-excluded from Git. Capture times must include a timezone offset and remain
-unknown when not supplied. Model and staff decisions are saved separately.
-There is no automatic retraining or communication with snowplow crews.
+## Use the dashboard
 
-The dashboard reads `models/classifier.pt`. If it is missing, being written,
-or invalid, the report is retained for manual review without an invented label.
-The cached model refreshes after a checkpoint changes. Existing saved reports
-are not automatically reclassified when training finishes.
+1. **Report a Condition:** upload a JPEG or PNG (up to 10 MB and 20 million
+   pixels), optionally enter location and capture time, and select Analyze
+   Photo. Previewing alone does not submit a report.
+2. **My Reports:** see submissions from your current browser session, staff
+   decisions, notes, and activity. Refresh status to read the latest review.
+   Session membership is not restored after starting a new browser session.
+3. **Staff Review:** inspect the photo and suggestion, then confirm or correct
+   the condition. Use Review Details to set priority, action, and notes.
+   Reports remain available for manual review if model analysis fails.
+
+### Review queues
+
+| View         | What it contains                                      |
+| ------------ | ----------------------------------------------------- |
+| Pending      | Reports awaiting their first staff assessment          |
+| Reviewed     | Assessed reports that remain open                      |
+| Reassessment | Assessed reports marked Needs reassessment             |
+| Closed       | Reports marked Resolved or Plowing completed           |
+| All          | Every saved report, including closed reports           |
+
+Closing removes a report from Reviewed and Priority Situations. Reassessment
+reopens it. Resolved does not claim plowing occurred; Plowing completed records
+staff confirmation. Monitoring, reassessment, and closing require a short reason.
+
+**Delete report is available only in Closed.** Confirmation permanently removes
+the photo, record, notes, and activity history. This cannot be undone.
+
+Priority Situations lists open, assessed reports by staff-assigned priority.
+Notify Plow Crew shows demo feedback only; no crew is contacted or dispatched.
+
+## Model and data boundaries
+
+- Photos are normalized to PNG with embedded metadata removed and retained in
+  `uploads/`. Report JSON records persist in `reviews/`. Both are excluded from
+  Git. Resetting the submission form does not delete saved reports.
+- Supplied location and capture time remain separate from image metadata.
+  Missing values stay unknown. Capture times require a timezone offset.
+- Model suggestions remain separate from staff decisions. Changing the model
+  does not reclassify saved reports; corrections do not retrain it automatically.
+- Model scores are not calibrated confidence percentages. The result dialog's
+  mixed-result rules (top score below 70% or top-two gap below 15 percentage
+  points) are provisional display heuristics. No validated uncertainty threshold
+  is configured, and every submission requires staff review.
+- Citizen phone photos differ from the traffic-camera training data. The model
+  cannot establish safety, urgency, snow depth, or reliable black-ice detection.
+- Staff notes are visible in My Reports. This prototype has no authentication
+  or production multi-user controls.
+
+## Test the application
 
 ```powershell
 .venv\Scripts\python.exe -m pytest tests -q -p no:cacheprovider
 ```
 
-The inherited system environment has unrelated `fastapi`/`starlette` and
-`rembg`/`numpy` requirement conflicts reported by `pip check`. Dashboard imports
-and tests are checked separately; this is not a fully isolated clean environment.
+Dashboard tests cover submissions, persistence, staff decisions, queue transitions,
+model-unavailable handling, and confirmed deletion. All 47 dashboard tests passed
+on October 30, 2026. This does not establish model accuracy or accessibility;
+browser layout and keyboard operation still need manual review.
 
-## Dashboard structure
+## Reproduce training and evaluation
 
-The dashboard is a single-page Streamlit app. `app.py` initializes storage and
-session state and renders the selected workspace without separate page scripts.
-Run it with the same `streamlit run app.py` command.
-
-```text
-app.py                      # App entry point and workspace routing
-components/
-    __init__.py
-    layout.py               # Branding, sidebar navigation, and footer
-    report_form.py          # Citizen photo submission and saved receipt
-    staff_review.py         # Staff queue, photo inspection, and review form
-    suggestion.py           # Shared model suggestion and assessment display
-    labels.py               # Shared condition, priority, and action labels
-    classifier.py           # Streamlit model cache and inference adapter
-dashboard/brand.html         # Local branding styles
-reports.py                  # Upload validation and report persistence
-inference.py                # Model loading, preprocessing, and prediction
-```
-
-UI components delegate persistence to `reports.py` and model execution to
-`inference.py`. Model outputs remain separate from staff decisions.
-
-## Data and training
-
-### Prepare the local dataset
-
-The dataset contains over 40,000 photos and is not included in this Git
-repository. `.gitignore` excludes `/data/` and ZIP archives to keep these
-large files out of version control. Each developer must download and extract
-the dataset locally before training or evaluation.
-
-1. Obtain the [Snow-Covered Roads Dataset](https://github.com/modraa-pixels/Snow-Covered-Roads-Dataset)
-   as a ZIP archive (GitHub **Code > Download ZIP**).
-2. Create a `data` folder at this project's root, beside `train.py` and
-   `README.md`.
-3. Extract the archive into `data/`. The extracted folder should be named
-   `Snow-Covered-Roads-Dataset-main`. If the extraction tool adds another
-   enclosing folder, move the dataset folder so the layout matches below.
-   Keep the original `train` and `test` splits and class folder names.
+The dataset is required only for training and evaluation. Obtain the
+[Snow-Covered Roads Dataset](https://github.com/modraa-pixels/Snow-Covered-Roads-Dataset)
+and extract it so the following path contains both `train/` and `test/`:
 
 ```text
-snowy-roads/
-├── README.md
-├── train.py
-└── data/
-    └── Snow-Covered-Roads-Dataset-main/
-        └── dataset/
-            ├── train/
-            │   ├── clear/
-            │   ├── light/
-            │   ├── medium/
-            │   └── plowed/
-            └── test/
-                ├── clear/
-                ├── light/
-                ├── medium/
-                └── plowed/
+data/Snow-Covered-Roads-Dataset-main/dataset/
+    train/{clear,light,medium,plowed}/
+    test/{clear,light,medium,plowed}/
 ```
 
-Each class folder must contain its corresponding image files. The default
-dataset root is `data/Snow-Covered-Roads-Dataset-main/dataset`, relative to
-the project root. Run this PowerShell check from the project root; all eight
-rows should show `Exists` as `True` and an image count greater than zero:
+Each class folder must contain images. Preserve the original split and class
+names. Check for an extra enclosing extraction folder if files are not found.
+Use `--data "path/to/dataset"` with training and evaluation for another location.
+Verify usage and redistribution terms before sharing images; raw data and ZIP
+archives are excluded from Git.
+
+Run from the project folder:
 
 ```powershell
-foreach ($split in 'train', 'test') {
-    foreach ($label in 'clear', 'light', 'medium', 'plowed') {
-        $folder = "data/Snow-Covered-Roads-Dataset-main/dataset/$split/$label"
-        [pscustomobject]@{
-            Folder = $folder
-            Exists = Test-Path -LiteralPath $folder -PathType Container
-            Images = @(Get-ChildItem -LiteralPath $folder -File -ErrorAction SilentlyContinue |
-                Where-Object { $_.Extension -in '.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.webp', '.ppm', '.pgm' }).Count
-        }
-    }
-}
-```
-
-If a folder is missing, check for an extra nested extraction folder. If you
-store the dataset elsewhere, pass `--data "path/to/dataset"` to both
-`train.py` and `evaluate.py`; that path must contain `train/` and `test/`.
-Do not commit images or distribute them without verifying usage terms.
-
-### Run commands and find outputs
-
-Run these commands in PowerShell from the project root, using the existing
-`.venv`. Prepare the dataset before training or evaluation.
-
-#### 1. Run automated tests
-
-```powershell
-.venv\Scripts\python.exe -m pytest tests -q -p no:cacheprovider
-```
-
-Expected output: a pytest pass/fail summary. Tests do not establish model
-accuracy. A temporary-folder cleanup permission error has occurred after
-successful tests in the current environment.
-
-#### 2. Optional training smoke test
-
-```powershell
+# Optional pipeline smoke test; do not use this checkpoint for real predictions
 .venv\Scripts\python.exe train.py --epochs 1 --limit 64 --output models/smoke.pt
-```
 
-Expected output: batch progress, epoch metrics, checkpoint-save messages,
-and a final graph-save message.
-
-Files: `models/smoke.pt`, `models/smoke.split.json`,
-`models/smoke.history.json`, and `graphs/smoke.loss.png`.
-
-This checks the training pipeline on a small subset. Do not use this
-checkpoint for held-out evaluation or dashboard suggestions.
-
-#### 3. Train the classifier
-
-```powershell
+# Train the classifier, then evaluate its best checkpoint
 .venv\Scripts\python.exe train.py --epochs 3
-```
-
-Expected output: device and image counts, batch progress, training and
-validation metrics per epoch, and checkpoint-save messages when validation
-loss improves.
-
-Files:
-
-- `models/classifier.pt`: checkpoint with the lowest validation loss.
-- `models/classifier.split.json`: training and validation image membership.
-- `models/classifier.history.json`: metrics for every completed epoch.
-- `graphs/classifier.loss.png`: both loss curves across the entire run.
-
-The checkpoint saves when validation loss improves. History saves after
-each epoch. The complete loss graph saves once after the final epoch.
-
-#### 4. Evaluate the best checkpoint
-
-```powershell
 .venv\Scripts\python.exe evaluate.py
-```
 
-Expected output: test-batch progress, final test loss and accuracy, followed
-by a JSON metrics report and a graph-save message. Metric values depend on
-the checkpoint and test data.
-
-Files saved after all test batches finish:
-
-- `reports/evaluation.json`: loss, accuracy, macro F1, per-class metrics,
-  confusion matrix, majority baseline, and CPU pipeline timing.
-- `graphs/evaluation.loss.png`: loss for each test batch.
-
-Confusion-matrix rows are actual classes; columns are predicted classes.
-The confusion matrix is stored in JSON, not as a separate image.
-Evaluation does not update the model. Its loss graph shows variation
-across test batches, not learning progress.
-
-#### 5. Predict one image
-
-Replace the example image path with an existing JPEG or PNG of at most 10 MB.
-
-```powershell
+# Analyze one existing JPEG or PNG without the dashboard
 .venv\Scripts\python.exe inference.py "path\to\photo.jpg"
 ```
 
-Expected output: JSON in the terminal containing `predicted_class`,
-`class_scores`, `model_version`, `label_mapping_version`, `uncertain`,
-and `limitation`. No prediction file is saved automatically.
+Training freezes the pretrained backbone and trains the four-output head.
+Approximately 20% of training camera IDs are reserved for validation with seed
+42. The checkpoint is selected by lowest validation loss. Training, evaluation,
+and inference share ImageNet resize, center crop, and normalization; the crop
+is not road-region detection. Pretrained weights download if not already cached.
 
-The class is one of `clear`, `light`, `medium`, or `plowed`.
-`uncertain` is null until a validation-selected threshold is configured.
-Scores are not calibrated guarantees of correctness.
+| Output                           | Purpose                                      |
+| -------------------------------- | -------------------------------------------- |
+| `models/classifier.pt`           | Best validation-loss checkpoint              |
+| `models/classifier.split.json`   | Training and validation membership           |
+| `models/classifier.history.json` | Metrics for each completed epoch             |
+| `graphs/classifier.loss.png`     | Complete training and validation loss curves |
+| `reports/evaluation.json`        | Held-out metrics and CPU pipeline timing     |
+| `graphs/evaluation.loss.png`     | Loss by test batch, not learning progress    |
 
-#### 6. Run the dashboard
+Evaluation reports accuracy, macro F1, per-class precision/recall, a majority
+baseline, and a confusion matrix (actual rows, predicted columns). It rejects
+smoke-test checkpoints and does not update the model. Inference prints JSON
+to the terminal without saving a prediction file.
 
-```powershell
-.venv\Scripts\python.exe -m streamlit run app.py
-```
-
-Expected output: a local URL, normally `http://127.0.0.1:8501`.
-Press Ctrl+C in the terminal to stop the server.
-
-The dashboard loads `models/classifier.pt`. Submitting a report saves
-`uploads/<record_id>.png` and `reviews/<record_id>.json`.
-Staff decisions update the JSON record while preserving the original
-model suggestion. Previewing an image does not submit a report.
-
-#### Preserve separate experiments
-
-Default paths overwrite generated outputs on later runs. Use matching
-custom checkpoint and report paths to preserve another experiment:
+Default paths overwrite earlier generated outputs. Preserve experiments with
+matching custom paths:
 
 ```powershell
 .venv\Scripts\python.exe train.py --epochs 3 --output models/experiment-02.pt
 .venv\Scripts\python.exe evaluate.py --model models/experiment-02.pt --output reports/experiment-02.json
-.venv\Scripts\python.exe inference.py "path\to\photo.jpg" --model models/experiment-02.pt
 ```
 
-Training metadata and graphs use the checkpoint's filename stem. Graphs are saved in `graphs/`.
-Evaluation graphs use the report's filename stem. The dashboard continues
-to use `models/classifier.pt`.
+The supplied test split may share cameras or neighboring frames with training.
+Camera-grouped validation does not resolve test leakage. Duplicate audits,
+label inspection, usage-term verification, and held-out result review remain
+necessary before making reliable performance claims.
 
-Use `--help` with any script to inspect its supported options.
-The trained checkpoint, its training history, loss graph, split manifest,
-and `reports/evaluation.json` are included in Git. Other generated model
-artifacts and reports, uploads, and reviews are excluded from Git.
+## Project structure
 
-Training reserves 20 percent of training camera IDs for validation with seed
-42. It never moves source images or trains on the test set. It freezes the
-pretrained backbone, including batch normalization statistics, and trains
-the four-output head. The lowest-validation-loss checkpoint is saved with
-its class order and preprocessing identifier. Split manifests and training
-history accompany the checkpoint. Reusing an output path overwrites those
-generated artifacts; use a new output name to preserve an experiment.
+```text
+app.py                  Streamlit entry point and workspace routing
+components/             Submission, history, staff review, and model display
+reports.py              Upload validation and local report persistence
+inference.py            Model loading, preprocessing, and prediction
+train.py / evaluate.py  Training and held-out evaluation
+config/labels.json      Class definitions and display mapping
+models/                 Checkpoint and training metadata
+```
 
-After the final epoch, training saves a graph of training and validation loss
-to `graphs/classifier.loss.png`. A custom `--output` checkpoint path produces
-a matching `.loss.png` file in `graphs/`. The graph includes every
-completed epoch and is generated once, after training finishes.
+## Troubleshooting
 
-The deterministic ImageNet resize, center crop, and normalization are shared
-across training, evaluation, and inference. The center crop is not a detected
-road region and may omit relevant content. Cached pretrained weights are
-used when present; torchvision otherwise attempts to download them.
-
-Evaluation reports a confusion matrix (true rows, predicted columns),
-accuracy, macro F1, class precision/recall, a training-majority baseline,
-and CPU pipeline time including decoding and preprocessing. Smoke-test
-models are explicitly rejected by held-out evaluation.
-
-After all test batches finish, evaluation saves a graph of each batch's loss
-to `graphs/evaluation.loss.png`. The final JSON report stays in `reports/`. A custom
-`--output` report path produces a matching `.loss.png` file in `graphs/`. This graph shows
-variation across test batches; the model does not learn during evaluation.
-
-## Limitations and next steps
-
-- The supplied train/test split can share cameras and neighboring frames.
-  Grouping validation cameras does not repair existing test leakage.
-- Exact/near-duplicate audit, complete image decoding audit, and source
-  usage-term verification remain necessary before reporting reliable results.
-- Training labels were generated automatically and may contain errors.
-- Citizen phone photos differ from traffic-camera training images.
-- Model scores are not calibrated probabilities of correctness.
-- No uncertainty threshold has been selected; inference returns uncertain=null.
-  Select a threshold using validation evidence before integrating queue rules.
-- No automatic unsuitable-image detector exists. Staff can mark photos unsuitable.
-- Browser layout and keyboard accessibility still require visual/manual review.
-- Four-class predictions cannot establish road safety, snow depth, or urgency.
-
-The trained checkpoint and the supporting evidence listed above are included
-in the repository; other model artifacts and generated reports remain local
-and excluded from Git.
-The source dataset is described in data/Snow-Covered-Roads-Dataset-main/README.md.
+- **PowerShell cannot find setup:** run `.\setup.ps1` from the project folder.
+  If script execution is blocked, use
+  `powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1` for that run.
+- **Setup rejects an existing environment:** rename the incompatible `.venv`
+  and rerun setup. Setup preserves existing environments. Do not distribute
+  `.venv`; create one per computer. Dependencies are pinned in
+  [requirements.txt](requirements.txt); choose a compatible PyTorch CPU/CUDA build.
+- **Dependency conflicts:** the existing development environment has previously
+  reported unrelated FastAPI/Starlette and rembg/NumPy conflicts. Use setup's
+  isolated environment and investigate `pip check` failures separately.
+- **Analysis unavailable:** verify `models/classifier.pt` exists and is a valid
+  non-smoke checkpoint. The app retains the report for manual assessment and
+  refreshes its model cache when the checkpoint changes.
+- **Temporary-folder permission errors in tests:** check access to Python's
+  temporary directory. Distinguish setup/cleanup errors from assertion failures.

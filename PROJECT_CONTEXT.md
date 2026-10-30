@@ -2,8 +2,8 @@
 
 ## Current direction and implementation status
 
-Version: 1.2
-Date: October 29, 2026
+Version: 1.3
+Date: October 30, 2026
 Project type: CanAI climate and emergency response hackathon MVP
 Status: Local classifier and staff-review prototype implemented;
 held-out evaluation and demonstration review remain the next focus.
@@ -29,8 +29,8 @@ Model suggestions and staff decisions remain separate. Reports remain
 available for manual review when inference is unavailable. There is no
 automatic retraining, dispatch, authentication, or public deployment.
 
-The remaining sections retain the MVP requirements and original planning
-context. Implemented behavior and run procedures are documented in README.md.
+This document distinguishes implemented behavior from evaluation goals and
+historical planning. Setup and run commands are documented in [README.md](README.md).
 
 ### Immediate next steps
 
@@ -46,23 +46,126 @@ Model scores do not establish road safety or operational urgency.
 
 ## 1. Product summary
 
-Municipal staff upload a road image, receive a suggested visible-condition classification, and review the result.
+Citizens submit road photographs with optional location and capture time.
+Municipal staff review the suggested visible condition, assign priority,
+and record the next action. Citizens can follow their reports within the
+current browser session through My Reports.
 
 The tool supports winter road monitoring through structured visual observations.
 It does not determine road safety or replace operational assessments.
 
-**Core workflow:** Upload road image → classify visible condition → display result for staff review.
+**Core workflow:** Submit photo → suggest visible condition → staff assessment → monitor, reassess, or close.
 
 ## 2. Problem statement
 
-Municipal staff must inspect road photographs to understand visible snow conditions.
-Manual inspection can slow the organization of winter road observations.
+Winter road photographs provide useful observations, but each image still
+requires interpretation and a clear follow-up decision. Reviewers need to
+distinguish unassessed reports, assessed reports requiring attention, and
+completed reports while preserving the original evidence and decision history.
 
-How can computer vision suggest consistent road-condition labels while keeping staff responsible for the final observation?
+The project investigates whether computer vision can reduce repetitive image
+sorting by suggesting consistent visible-condition labels, while keeping
+staff responsible for assessment, priority, and action. Faster review and
+improved consistency are intended benefits, not demonstrated outcomes.
+
+A photograph cannot establish road safety, detect every hazard, or guarantee
+that conditions remain unchanged after capture.
+
+### Solution methodology
+
+1. **Prepare the data.** Use the original four dataset classes: `clear`,
+   `light`, `medium`, and `plowed`. Inspect labels and distributions, separate
+   training and validation by camera, and audit test overlap and duplicates
+   before making performance claims.
+2. **Train the classifier.** Adapt pretrained ResNet-18 with a frozen backbone,
+   including batch normalization statistics, and a trainable four-output head.
+   Reserve approximately 20 percent of training camera IDs for validation
+   using seed 42. Select the checkpoint by lowest validation loss. Share
+   ImageNet resize, center crop, and normalization across training,
+   evaluation, and inference. The crop is not road-region detection.
+3. **Capture and analyze reports.** Validate JPEG/PNG uploads, remove embedded
+   metadata, and save normalized PNG photos and JSON records locally.
+   Keep supplied location and capture time separate; missing values remain
+   unknown. If inference fails, retain the report for manual review.
+4. **Keep staff in control.** Present the photo and suggestion together.
+   Staff confirm or correct conditions, identify unsuitable or inconclusive
+   images, assign priority, and save actions and notes. Preserve model output
+   separately from staff decisions. Corrections do not automatically retrain
+   the model.
+5. **Track follow-up.** Separate assessed open reports from closed reports,
+   preserve saved review events, and allow reassessment when new evidence
+   requires another decision. Plowing recommendations do not dispatch crews.
+6. **Validate the result.** Evaluate held-out performance, confused classes,
+   representative failures, and CPU pipeline timing. Test persistence,
+   review transitions, inference failure, and deletion controls. Assess browser
+   layout and keyboard access separately. Operational benefits require
+   evidence beyond automated tests.
+
+### Implemented report lifecycle
+
+| View         | Included reports                                         |
+| ------------ | -------------------------------------------------------- |
+| Pending      | Reports with no saved staff assessment                    |
+| Reviewed     | Assessed reports whose action is not a closing outcome    |
+| Reassessment | Reports with the Needs reassessment action                |
+| Closed       | Reports marked Resolved or Plowing completed              |
+| All          | Every saved report, including closed reports              |
+
+Reassessment is an overlapping follow-up view: its assessed reports also
+appear in Reviewed. Closed reports are excluded from Reviewed and the active
+Priority Situations panel. Choosing Needs reassessment reopens a closed report.
+Resolved does not assert that plowing occurred; Plowing completed records
+staff confirmation. Monitoring, reassessment, resolution, and completed
+plowing require a short reason.
+
+Only Closed offers Delete report. Confirmation permanently removes that
+report's photo, JSON record, notes, and activity history, including its
+appearance in My Reports. Deletion cannot be undone. All has no delete control.
+
+Priority Situations contains assessed, open reports with staff-assigned
+priority: Urgent assessment, Assess soon, then Routine, with newest reviews
+first within a priority. The model does not assign operational urgency.
+
+### Current interaction and data boundaries
+
+- Report a Condition previews a photo before submission. Analyze Photo saves
+  it and opens the result dialog. Repeating an unchanged submission reopens
+  its result rather than creating another report.
+- Confirm & Next saves the suggested condition while preserving existing
+  priority, action, and notes. Review Details opens manual assessment controls.
+- My Reports tracks submissions from the current browser session, not an
+  authenticated account. Staff notes are visible in this citizen view.
+- Shared activity records show receipt, analysis, and saved staff reviews.
+  Display times use the viewer's browser timezone, with UTC fallback; stored
+  timestamps remain unchanged. Missing historical events are not invented.
+- Related reports match location text after case and whitespace normalization.
+  They are not inferred duplicates, and reviewing one does not update others.
+- Photos persist under `uploads/`; individual JSON records persist under
+  `reviews/`. Both are excluded from Git. The workspace selector is navigation,
+  not authentication. Keep the demonstration bound to localhost.
+- Notify Plow Crew is a demonstration confirmation only. It contacts no crew,
+  reserves no equipment, and saves no dispatch status.
+
+### Model uncertainty and evaluation status
+
+The result dialog uses provisional display rules: a top score below 70 percent
+or a top-two gap below 15 percentage points marks the result as possible and
+mixed. These are presentation heuristics, not validated confidence thresholds.
+They do not change stored `uncertain` values or bypass staff review.
+Inference uncertainty remains null until a validation-selected threshold is
+configured. Scores are not calibrated probabilities of correctness.
+
+On October 30, 2026, all 47 dashboard tests passed after rerunning with access
+to Python temporary folders. This includes closed/reviewed separation,
+reopening, and deletion visibility. Automated tests do not establish model
+accuracy, operational benefit, or browser accessibility. Held-out evaluation
+review, leakage audits, usage-term verification, representative phone-photo
+assessment, and manual interface checks remain necessary.
 
 ## 3. Target users and value
 
-Primary users are municipal winter maintenance staff and road-condition reviewers.
+Primary reviewers are municipal winter maintenance staff and road-condition
+reviewers. Citizens submit observations and follow their session's reports.
 
 The prototype aims to:
 
@@ -251,6 +354,11 @@ Store these fields for each submitted review:
 | unsuitable | Whether staff marked the image unsuitable |
 | staff_note | Optional review note |
 | reviewed_at | Review timestamp or null |
+| inference_status | Whether model analysis was available |
+| uncertain | Model uncertainty flag; null without a configured threshold |
+| priority | Staff-assigned priority; initially unassigned |
+| action | Staff-selected next action or closing outcome |
+| activity | Receipt, analysis, and saved staff-review events |
 
 Staff confirmation records a reviewed observation, not a verified declaration of road safety.
 
@@ -299,7 +407,10 @@ The MVP is complete when:
 - Evaluation includes held-out results and known limitations.
 - README instructions let another developer run the demo.
 
-## 12. Ten-hour implementation plan
+## 12. Original ten-hour implementation plan
+
+This is the historical hackathon schedule, not the current completion status.
+See the implementation status and immediate next steps above for current work.
 
 | Time | Work | Completion evidence |
 | --- | --- | --- |
@@ -356,14 +467,15 @@ Avoid collecting names or other unnecessary personal information.
 Strip embedded image metadata before retaining uploaded images.
 Keep supplied location separate from embedded metadata.
 Use permitted, anonymized images for public demonstrations.
-Default to session-only image handling unless retention is explicitly enabled.
-Clearly explain local review storage and provide a reset option.
+The implemented prototype retains submitted photos and reports locally across
+app restarts. My Reports membership is session-scoped; stored photos are not.
+Check Another Photo resets the submission form without deleting saved reports.
+Confirmed deletion is available for individual closed reports only.
 
 ## 16. Future extensions
 
 Consider these only after validating the core classifier:
 
-- A queue of images awaiting review.
 - A map of reviewed observations with capture timestamps.
 - Before-and-after comparisons for the same camera view.
 - Additional Canadian camera viewpoints.
