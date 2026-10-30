@@ -60,10 +60,22 @@ From the project directory:
 ```
 
 Open the local URL printed by Streamlit (normally http://127.0.0.1:8501).
-Use **Report a condition** to drag and drop a JPEG/PNG into the upload area
+Use **Report a Condition** to drag and drop a JPEG/PNG into the upload area
 or use the upload button to browse, then preview and submit it with optional location
-and capture time. Use **Staff review** to inspect saved reports, confirm or
+and capture time. **Analyze Photo** saves the report and opens a **Road Condition Analysis**
+dialog with the detected condition highlighted and all four relative match scores
+displayed directly below it; these are not calibrated confidence percentages.
+Technical model identifiers remain in the saved record. Close the dialog with
+**Done** or reopen it with **View Results** without running analysis again.
+If analysis is unavailable, the dialog confirms that the photo is saved for review.
+The upload workspace uses a compact photo preview (at most 180 pixels tall).
+**Open Full Photo** opens the original separately; analysis always uses the original upload.
+**Check Another Photo** clears the form without deleting saved reports. Repeating an
+unchanged submission reopens its existing results instead of creating a duplicate report.
+Use **Staff Review** to inspect saved reports, confirm or
 correct conditions, and record priority, notes, and action recommendations.
+Staff photo previews are capped at 260 pixels tall. Saving an assessment immediately
+updates the queue and counts.
 The mode selector is navigation, not authentication. Keep this demonstration
 bound to localhost.
 

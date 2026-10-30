@@ -133,15 +133,16 @@ def test_dashboard_views_and_missing_photo_message(storage):
     app = AppTest.from_file(Path("app.py").resolve(), default_timeout=30).run()
     assert not app.exception
     assert any("Drag and drop one JPEG or PNG" in message.value for message in app.caption)
-    app.button[0].click().run()
-    assert any("Choose a road photo" in message.value for message in app.error)
+    app.button(key="analyze_photo").click().run()
+    assert any("Please upload a road photo before analyzing" == message.value for message in app.error)
     app.radio(key="workspace").set_value("Staff review").run()
     assert not app.exception
     assert any("No reports" in message.value for message in app.info)
 
 
-def test_submission_receipt_survives_workspace_switch(storage, monkeypatch):
-    """Submit through the component and retain the receipt across workspace changes."""
+@pytest.mark.parametrize("available", [True, False])
+def test_submission_receipt_survives_workspace_switch(storage, monkeypatch, available):
+    """Open results once, reopen without rerunning inference, and retain the receipt."""
     import streamlit as st
     from components import report_form
 
@@ -153,6 +154,8 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch):
 
     def predict(image_path, model_path):
         calls.append((image_path, model_path))
+        if not available:
+            raise FileNotFoundError("fixture")
         return {
             "predicted_class": "light",
             "class_scores": {"clear": .1, "light": .6, "medium": .2, "plowed": .1},
@@ -160,19 +163,40 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch):
 
     monkeypatch.setattr(report_form, "classify_photo", predict)
     app = AppTest.from_file(Path("app.py").resolve(), default_timeout=30).run()
-    app.button[0].click().run()
+    app.button(key="analyze_photo").click().run()
     assert any("Confirm local storage" in message.value for message in app.error)
     assert not list(storage.glob("*.json"))
     app.checkbox[0].check()
     app.text_input[0].set_value("Test intersection")
-    app.button[0].click().run()
+    app.button(key="analyze_photo").click().run()
     assert not app.exception
     receipt = app.session_state["receipt"]
-    assert receipt["inference_status"] == "available"
+    assert receipt["inference_status"] == ("available" if available else "unavailable")
     assert receipt["location"] == "Test intersection"
     assert calls == [(storage / f"{receipt['record_id']}.png", reports.ROOT / "models/classifier.pt")]
     assert any("Report saved" in message.value for message in app.success)
-    assert len(app.table) == 1
+    if available:
+        assert len(app.table) == 1
+        assert list(app.table[0].value["Match Score"]) == ["60.0%", "20.0%", "10.0%", "10.0%"]
+    else:
+        assert not app.table
+        assert any("Analysis unavailable" in message.value for message in app.warning)
+    assert app.button(key="close_analysis_results").label == "Done"
+
+    app.button(key="close_analysis_results").click().run()
+    assert not app.exception
+    assert not app.table
+    assert not any(button.key == "close_analysis_results" for button in app.button)
+    app.button(key="analyze_photo").click().run()
+    assert not app.exception
+    assert len(calls) == 1
+    assert len(list(storage.glob("*.json"))) == 1
+    app.button(key="close_analysis_results").click().run()
+    app.button(key="view_receipt_results").click().run()
+    assert not app.exception
+    assert len(app.table) == (1 if available else 0)
+    assert len(calls) == 1
+    app.button(key="close_analysis_results").click().run()
 
     app.radio(key="workspace").set_value("Staff review").run()
     assert not app.exception
@@ -181,7 +205,15 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch):
     assert not app.exception
     assert app.session_state["receipt"] == receipt
     assert any("Report saved" in message.value for message in app.success)
+    assert not any(button.key == "close_analysis_results" for button in app.button)
     assert len(calls) == 1
+    assert len(list(storage.glob("*.json"))) == 1
+    app.button(key="new_photo").click().run()
+    assert not app.exception
+    assert app.session_state["receipt"] is None
+    assert app.session_state["upload_revision"] == 1
+    assert app.text_input(key="report_location").value == ""
+    assert not app.checkbox(key="report_consent").value
     assert len(list(storage.glob("*.json"))) == 1
 
 
@@ -206,10 +238,17 @@ def test_staff_review_components_save_and_filter_reports(storage, available):
     assert not app.exception
     assert app.metric[0].value == "1"
     assert app.metric[1].value == "1"
+    assert not app.table
+    app.button(key=f"view_analysis_{record['record_id']}").click().run()
+    assert not app.exception
     if available:
         assert len(app.table) == 1
     else:
-        assert any("model is unavailable" in message.value for message in app.warning)
+        assert any("Analysis unavailable" in message.value for message in app.warning)
+        assert not app.table
+    app.button(key="close_analysis_results").click().run()
+    assert not app.exception
+    assert not app.table
     app.toggle[0].set_value(True).run()
     assert not app.exception
     assert any("not a detected road region" in message.value for message in app.caption)
@@ -217,7 +256,7 @@ def test_staff_review_components_save_and_filter_reports(storage, available):
     app.selectbox[2].set_value("assess-soon")
     app.selectbox[3].set_value("assess-plowing")
     app.text_area[0].set_value("Inspect road")
-    app.button[1].click().run()
+    app.button(key=f"save_review_{record['record_id']}").click().run()
     assert not app.exception
     saved = json.loads(reports.record_path(record["record_id"]).read_text())
     assert saved["staff_class"] == "medium"
@@ -226,7 +265,9 @@ def test_staff_review_components_save_and_filter_reports(storage, available):
     assert saved["staff_note"] == "Inspect road"
     for key in ("predicted_class", "class_scores", "model_version", "inference_status"):
         assert saved[key] == record[key]
-    app.button[0].click().run()
+    assert app.metric[1].value == "0"
+    assert any("queue is up to date" in message.value for message in app.success)
+    app.button(key="refresh_reports").click().run()
     assert not app.exception
     assert any("No reports" in message.value for message in app.info)
     app.segmented_control[0].set_value("Reviewed").run()
@@ -235,6 +276,24 @@ def test_staff_review_components_save_and_filter_reports(storage, available):
     app.segmented_control[0].set_value("All").run()
     assert not app.exception
     assert app.selectbox[0].value == record["record_id"]
+
+
+@pytest.mark.parametrize("size", [(1600, 900), (900, 1600), (32, 32)])
+def test_photo_previews_stay_compact_and_preserve_original(size):
+    """Bound portrait and landscape previews without changing analysis input or upscaling."""
+    from components.photo import preview_image
+
+    image = io.BytesIO()
+    Image.new("RGB", size).save(image, format="PNG")
+    original = image.getvalue()
+    image.seek(0)
+    preview = preview_image(image)
+    assert preview.height <= 240
+    assert preview.width <= 560
+    assert preview.width <= size[0] and preview.height <= size[1]
+    assert preview.width / preview.height == pytest.approx(size[0] / size[1], abs=.01)
+    assert image.getvalue() == original
+    assert image.tell() == 0
 
 
 def test_classifier_component_refreshes_cache_and_rejects_smoke_models(tmp_path, monkeypatch):
