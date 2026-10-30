@@ -78,6 +78,32 @@
 .st-key-saved_report h3 { padding-bottom: 0; }
 .st-key-queue_controls { padding: 1rem 1.25rem; }
 
+/* Frost the priority rail so scenery cannot compete with report details. */
+.st-key-priority_situations {
+    padding: 1.25rem;
+    background: rgba(247, 251, 255, 0.94);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    border: 1px solid #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 30px rgba(25, 58, 99, 0.12);
+    color: var(--snowy-ink);
+}
+.st-key-priority_situations [class*="st-key-priority_card_"] {
+    padding: 1rem;
+    background: #fff;
+    border: 1px solid var(--snowy-line);
+    border-radius: 12px;
+}
+.st-key-priority_situations [data-testid="stCaptionContainer"] { color: #425b76; }
+.st-key-priority_situations [data-testid="stImage"] img { border-radius: 9px; }
+.st-key-priority_situations [class*="st-key-plowing_recommended_"] [data-testid="stAlert"] {
+    background: #fff0f0;
+    border: 1px solid #e5aaaa;
+    border-left: 4px solid #b42318;
+    color: #9b1c13;
+}
+
 /* Photo sizes are also bounded in Python so portrait uploads stay compact. */
 [class*="st-key-preview_"] {
     display: flex;
@@ -244,7 +270,7 @@
     .st-key-page_heading { margin-bottom: 0.5rem; }
     .st-key-page_heading [data-testid="stMarkdown"] p { font-size: 0.9rem; }
     :is(.st-key-upload_card, .st-key-details_card, .st-key-observation_card, .st-key-assessment_card,
-        .st-key-saved_report, .st-key-queue_controls) { padding: 1.1rem; border-radius: 14px; }
+        .st-key-saved_report, .st-key-queue_controls, .st-key-priority_situations) { padding: 1.1rem; border-radius: 14px; }
     .snowy-section-heading h2 { font-size: 1.15rem; }
     .st-key-review_stats [data-testid="stMetric"] { padding: 1rem; min-width: 130px; }
     .st-key-review_stats [data-testid="stMetricValue"] { font-size: 1.7rem; }

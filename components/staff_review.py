@@ -37,6 +37,18 @@ def open_priority_situation(identifier):
     st.session_state.selected_report = identifier
 
 
+@st.dialog("Plow Crew Notification · Demo", width="small", on_dismiss="rerun")
+def show_crew_notification(record):
+    """Preview notification feedback without sending a message or changing dispatch records."""
+    st.info("Demo only. No message has been sent to a plow crew.")
+    st.success("Snow Plow Crew notified for the next available snow plow.",
+               icon=":material/local_shipping:")
+    st.text(record["location"] or "Unknown location")
+    st.caption(f"Report {record['record_id'][:8]}")
+    if st.button("Close", icon=":material/close:", key="close_crew_notification", width="stretch"):
+        st.rerun()
+
+
 def render_priority_situations(records):
     """Display a scrollable panel of reviewed photos with staff-assigned priorities and actions."""
     situations = priority_situations(records)
@@ -49,8 +61,10 @@ def render_priority_situations(records):
         with st.container(height=560, border=False):
             for row in situations:
                 identifier = row["record_id"]
-                with st.container(border=True):
-                    st.badge(PRIORITIES[row["priority"]], icon=":material/flag:")
+                with st.container(border=True, key=f"priority_card_{identifier}"):
+                    urgent = row["priority"] == "urgent-assessment"
+                    st.badge(PRIORITIES[row["priority"]], icon=":material/flag:",
+                             color="red" if urgent else "blue")
                     image = reports.UPLOADS / f"{identifier}.png"
                     try:
                         st.image(preview_image(image, max_height=110),
@@ -61,7 +75,16 @@ def render_priority_situations(records):
                     st.text(row["location"] or "Unknown location")
                     st.caption(f"Captured: {row['captured_at'] or 'Unknown'}")
                     st.caption(f"Review: {row['review_status'].title()}")
-                    st.write(ACTIONS[row["action"]])
+                    if row["action"] == "recommend-plowing":
+                        with st.container(key=f"plowing_recommended_{identifier}"):
+                            st.error("Plowing recommended", icon=":material/local_shipping:")
+                            st.caption("Staff recommendation · Not dispatched")
+                        if st.button("Notify Plow Crew", icon=":material/notifications_active:",
+                                     key=f"notify_crew_{identifier}", width="stretch",
+                                     help="Demo notification preview. No message is sent."):
+                            show_crew_notification(row)
+                    else:
+                        st.write(ACTIONS[row["action"]])
                     st.button("Open assessment", key=f"priority_{identifier}", width="stretch",
                               on_click=open_priority_situation, args=(identifier,))
 

@@ -331,16 +331,34 @@ def test_priority_panel_updates_and_reopens_saved_assessment(storage):
     assert any("No reviewed reports" in item.value for item in app.info)
     app.selectbox[1].set_value("medium")
     app.selectbox[2].set_value("urgent-assessment")
-    app.selectbox[3].set_value("assess-plowing")
+    app.selectbox[3].set_value("recommend-plowing")
     app.button(key=f"save_review_{record['record_id']}").click().run()
     assert not app.exception
     assert any("No reports in this view" in item.value for item in app.info)
     assert app.button(key=f"priority_{record['record_id']}")
+    assert any(message.value == "Plowing recommended" for message in app.error)
+    app.button(key=f"notify_crew_{record['record_id']}").click().run()
+    assert not app.exception
+    assert any("No message has been sent" in message.value for message in app.info)
+    assert any("Snow Plow Crew notified for the next available snow plow." == message.value
+               for message in app.success)
+    app.button(key="close_crew_notification").click().run()
+    assert not app.exception
+    assert not any("Snow Plow Crew notified" in message.value for message in app.success)
+    saved = json.loads(reports.record_path(record["record_id"]).read_text())
+    assert saved["action"] == "recommend-plowing"
+    assert "dispatch_status" not in saved
     app.button(key=f"priority_{record['record_id']}").click().run()
     assert not app.exception
     assert app.segmented_control[0].value == "Reviewed"
     assert app.selectbox(key="selected_report").value == record["record_id"]
     assert app.selectbox[2].value == "urgent-assessment"
+
+    app.selectbox[3].set_value("monitor")
+    app.button(key=f"save_review_{record['record_id']}").click().run()
+    assert not app.exception
+    assert not app.error
+    assert not any(button.key == f"notify_crew_{record['record_id']}" for button in app.button)
 
     (storage / f"{record['record_id']}.png").unlink()
     app.run()

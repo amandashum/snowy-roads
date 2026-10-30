@@ -81,6 +81,9 @@ priority: Urgent assessment, Assess soon, then Routine. Newest reviews appear fi
 within each level. Each entry shows a photo, location, capture time, review status,
 and recommended action. **Open assessment** reopens its saved review. Pending and
 unassigned reports remain outside this panel; model suggestions never assign priority.
+For reports recommending plowing, **Notify Plow Crew** opens a demo confirmation
+with an X close control. This previews notification feedback only; no crew is contacted,
+no snowplow is reserved, and no dispatch status is saved.
 The mode selector is navigation, not authentication. Keep this demonstration
 bound to localhost.
 
