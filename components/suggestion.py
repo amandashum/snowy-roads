@@ -18,9 +18,17 @@ def assessment_flag(record):
     return "Routine condition review"
 
 
-def render_condition_title(condition, label):
+def mixed_result(record):
+    """Apply provisional display rules without changing saved model uncertainty or review status."""
+    scores = sorted(record["class_scores"].values(), reverse=True)
+    return scores[0] < 0.70 or round(scores[0] - scores[1], 12) < 0.15
+
+
+def render_condition_title(condition, label, possible=False):
     """Use one heading treatment for the result dialog and saved-report summary."""
     title = DISPLAY[condition].title() if condition is not None else "Ready for Staff Review"
+    if possible:
+        title = f"Possible {title}"
     st.html(f'<div class="snowy-condition-heading"><p class="snowy-condition-label">{escape(label)}</p>'
             f'<h3 class="snowy-condition-title">{escape(title)}</h3></div>')
 
@@ -31,10 +39,14 @@ def show_results(record):
     if record["inference_status"] != "available":
         st.warning("Analysis unavailable — your photo is saved for staff review")
     else:
+        mixed = mixed_result(record)
         with st.container(key="detected_condition"):
-            render_condition_title(record["predicted_class"], "DETECTED CONDITION")
-        if record["uncertain"] is True:
-            st.warning("Uncertain result. Check the photo before choosing a condition.")
+            render_condition_title(record["predicted_class"], "DETECTED CONDITION", possible=mixed)
+        if mixed:
+            note = "Saved for staff review." if record["review_status"] == "pending" else "Staff review recorded."
+            st.caption(f"Results are mixed. {note}")
+        else:
+            st.caption("*AI assessment*")
         scores = sorted(record["class_scores"].items(), key=lambda item: item[1], reverse=True)
         st.table([{"Condition": DISPLAY[label], "Match Score": f"{score:.1%}"}
                   for label, score in scores], alt="Photo match scores for all four road conditions")

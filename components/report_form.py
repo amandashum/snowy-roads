@@ -10,6 +10,7 @@ from components.classifier import classify_photo
 from components.layout import render_page_heading, render_section_heading
 from components.photo import render_photo
 from components.suggestion import render_condition_title, show_results
+from components.report_history import open_my_report
 
 
 def start_new_report():
@@ -47,7 +48,7 @@ def render_report_form():
             captured_at = st.text_input("Photo Taken At (optional)", key="report_capture_time",
                                         placeholder="2026-10-30T14:30:00-03:30",
                                         help="Include the timezone offset, or leave blank if unknown", max_chars=64)
-            consent = st.checkbox("Save this photo and details on this computer for staff review",
+            consent = st.checkbox("I agree to terms and conditions",
                                   key="report_consent")
             submit = st.form_submit_button("Analyze Photo", key="analyze_photo", type="primary", width="stretch")
         if submit:
@@ -56,7 +57,7 @@ def render_report_form():
             elif not valid_photo:
                 st.error("Please upload a valid JPEG or PNG photo before analyzing")
             elif not consent:
-                st.error("Confirm local storage before submitting")
+                st.error("Please agree to terms and conditions before submitting")
             else:
                 content = photo.getvalue()
                 signature = (hashlib.sha256(content).hexdigest(), location, captured_at)
@@ -67,6 +68,10 @@ def render_report_form():
                                 "image_base64": base64.b64encode(content).decode(),
                                 "location": location, "captured_at": captured_at}, predictor=classify_photo)
                         st.session_state.last_submission = signature
+                    identifier = st.session_state.receipt["record_id"]
+                    history = st.session_state.setdefault("my_report_ids", [])
+                    if identifier not in history:
+                        history.append(identifier)
                     open_results = True
                 except (ValueError, OSError) as error:
                     st.error(f"The report could not be submitted: {error}")
@@ -77,11 +82,13 @@ def render_report_form():
             with summary:
                 render_condition_title(receipt["predicted_class"] if receipt["inference_status"] == "available"
                                        else None, "LATEST SAVED REPORT")
-                st.success(f"Report saved · {receipt['record_id'][:8]}")
+                st.success(f"Report saved · Report #{receipt['record_id']}")
                 st.caption(receipt["location"] or "Location not provided")
             with actions:
+                st.button("View my report", key="view_my_report", type="primary", width="stretch",
+                          on_click=open_my_report, args=(receipt["record_id"],))
                 view_results = st.button("View Results", key="view_receipt_results", icon=":material/bar_chart:",
-                                         type="primary", width="stretch")
+                                         width="stretch")
                 st.button("Check Another Photo", key="new_photo", icon=":material/add_photo_alternate:",
                           on_click=start_new_report, width="stretch")
         if open_results or view_results:

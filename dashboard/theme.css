@@ -65,7 +65,7 @@
 }
 .snowy-section-heading h2 { margin: 0; padding: 0; font-size: 1.25rem; line-height: 1.3; }
 
-:is(.st-key-upload_card, .st-key-details_card, .st-key-observation_card, .st-key-assessment_card,
+:is(.st-key-upload_card, .st-key-details_card, .st-key-observation_card, .st-key-assessment_card, .st-key-review_card,
     .st-key-saved_report, .st-key-queue_controls) {
     padding: 1.5rem;
     background: rgba(252, 254, 255, 0.97);
@@ -78,8 +78,9 @@
 .st-key-saved_report h3 { padding-bottom: 0; }
 .st-key-queue_controls { padding: 1rem 1.25rem; }
 
-/* Frost the priority rail so scenery cannot compete with report details. */
-.st-key-priority_situations {
+/* Frost report surfaces so scenery cannot compete with their details. */
+.st-key-priority_situations,
+[class*="st-key-my_report_"] {
     padding: 1.25rem;
     background: rgba(247, 251, 255, 0.94);
     -webkit-backdrop-filter: blur(18px);
@@ -269,9 +270,20 @@
     }
     .st-key-page_heading { margin-bottom: 0.5rem; }
     .st-key-page_heading [data-testid="stMarkdown"] p { font-size: 0.9rem; }
-    :is(.st-key-upload_card, .st-key-details_card, .st-key-observation_card, .st-key-assessment_card,
-        .st-key-saved_report, .st-key-queue_controls, .st-key-priority_situations) { padding: 1.1rem; border-radius: 14px; }
+    :is(.st-key-upload_card, .st-key-details_card, .st-key-observation_card, .st-key-assessment_card, .st-key-review_card,
+        .st-key-saved_report, .st-key-queue_controls, .st-key-priority_situations,
+        [class*="st-key-my_report_"]) { padding: 1.1rem; border-radius: 14px; }
     .snowy-section-heading h2 { font-size: 1.15rem; }
     .st-key-review_stats [data-testid="stMetric"] { padding: 1rem; min-width: 130px; }
     .st-key-review_stats [data-testid="stMetricValue"] { font-size: 1.7rem; }
+}
+
+/* Stretch the priority surface with the review, while its entries scroll independently. */
+@media (min-width: 641px) {
+    .st-key-review_panels [data-testid="stHorizontalBlock"] { align-items: stretch; }
+    .st-key-review_panels .st-key-priority_situations { height: 100%; }
+    .st-key-review_panels .st-key-priority_list { flex: 1 1 0; min-height: 0; overflow-y: auto; }
+}
+@media (max-width: 640px) {
+    .st-key-priority_list { max-height: 560px; overflow-y: auto; }
 }

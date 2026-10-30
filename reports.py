@@ -26,6 +26,7 @@ RECORDS = ROOT / "reviews"
 UPLOADS = ROOT / "uploads"
 LABELS = json.loads((ROOT / "config/labels.json").read_text())["classes"]
 CLASS_IDS = {item["id"] for item in LABELS}
+CLOSED_ACTIONS = {"resolved", "plowing-completed"}
 
 
 def timestamp():
@@ -82,6 +83,7 @@ def create_report(payload, predictor=None):
     Returns:
         The saved report, including an unavailable state if inference fails.
     """
+    received_at = timestamp()
     location = payload.get("location", "")
     captured = payload.get("captured_at") or None
     if not isinstance(location, str) or len(location) > 200:
@@ -113,22 +115,26 @@ def create_report(payload, predictor=None):
     identifier = str(uuid.uuid4())
     image_path = UPLOADS / f"{identifier}.png"
     normalized.save(image_path, format="PNG")
-    record = {"record_id": identifier, "uploaded_at": timestamp(),
+    record = {"record_id": identifier, "uploaded_at": received_at,
               "captured_at": captured, "location": location.strip() or None,
               "predicted_class": None, "class_scores": None, "model_version": None,
               "label_mapping_version": "1", "uncertain": None,
               "inference_status": "unavailable", "review_status": "pending",
               "staff_class": None, "priority": "unassigned", "action": "undecided",
-              "staff_note": "", "unsuitable": False, "reviewed_at": None}
+              "staff_note": "", "unsuitable": False, "reviewed_at": None,
+              "activity": [{"at": received_at, "kind": "received"}]}
     try:
         from inference import predict
         prediction = (predictor or predict)(image_path, ROOT / "models/classifier.pt")
         record.update({key: prediction[key] for key in
                        ("predicted_class", "class_scores", "model_version", "label_mapping_version", "uncertain")})
         record["inference_status"] = "available"
+        record["activity"].append({"at": timestamp(), "kind": "ai-analysis",
+                                   "condition": record["predicted_class"]})
     except Exception:
         # A missing or still-writing checkpoint must not fabricate a suggestion
         record["inference_status"] = "unavailable"
+        record["activity"].append({"at": timestamp(), "kind": "analysis-unavailable"})
     try:
         save_record(record)
     except Exception:
@@ -156,13 +162,33 @@ def review_report(identifier, payload):
         raise ValueError("Select a reviewed condition")
     if priority not in {"unassigned", "routine", "assess-soon", "urgent-assessment"}:
         raise ValueError("Select a valid priority")
-    if action not in {"undecided", "monitor", "assess-plowing", "recommend-plowing", "no-action"}:
+    if action not in {"undecided", "monitor", "assess-plowing", "recommend-plowing", "no-action",
+                      "reassess", "resolved", "plowing-completed"}:
         raise ValueError("Select a valid action")
     if not isinstance(note, str) or len(note) > 2000:
         raise ValueError("Notes must contain at most 2,000 characters")
+    if action in {"monitor", "reassess", "resolved", "plowing-completed"} and not note.strip():
+        raise ValueError("Add a short reason for monitoring, reassessment, resolution, or completed plowing")
     status = "inconclusive" if condition in {"inconclusive", "unsuitable"} else (
         "confirmed" if condition == record["predicted_class"] else "corrected")
+    activity = report_activity(record)
+    reviewed_at = timestamp()
+    activity.append({"at": reviewed_at, "kind": "staff-review", "condition": condition,
+                     "priority": priority, "action": action, "note": note})
     record.update(staff_class=condition, priority=priority, action=action, staff_note=note,
-                  unsuitable=condition == "unsuitable", review_status=status, reviewed_at=timestamp())
+                  unsuitable=condition == "unsuitable", review_status=status, reviewed_at=reviewed_at,
+                  activity=activity)
     save_record(record)
     return record
+
+
+def report_activity(record):
+    """Return saved events, or only known upload and latest-review facts for older records."""
+    if "activity" in record:
+        return list(record["activity"])
+    activity = [{"at": record.get("uploaded_at"), "kind": "received"}]
+    if record.get("reviewed_at"):
+        activity.append({"at": record["reviewed_at"], "kind": "staff-review",
+                         "condition": record.get("staff_class"), "action": record.get("action"),
+                         "priority": record.get("priority"), "note": record.get("staff_note", "")})
+    return activity

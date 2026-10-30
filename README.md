@@ -65,6 +65,14 @@ or use the upload button to browse, then preview and submit it with optional loc
 and capture time. **Analyze Photo** saves the report and opens a **Road Condition Analysis**
 dialog with the detected condition highlighted and all four relative match scores
 displayed directly below it; these are not calibrated confidence percentages.
+The dialog uses provisional display rules: a top score below 70% or a gap
+between the top two scores below 15 percentage points adds “Possible” to the
+condition heading and “Results are mixed. Saved for staff review.” For reports
+already reviewed, the note says “Staff review recorded.” Clearer results show
+“AI assessment” in small italic text without the mixed-result note, keeping the
+condition heading unchanged. These rules are not validated
+confidence thresholds and do not change saved model uncertainty. Every report
+still enters the staff queue; no result automatically bypasses staff review.
 Technical model identifiers remain in the saved record. Close the dialog with
 **Done** or reopen it with **View Results** without running analysis again.
 If analysis is unavailable, the dialog confirms that the photo is saved for review.
@@ -74,6 +82,13 @@ The upload workspace uses a compact photo preview (at most 180 pixels tall).
 unchanged submission reopens its existing results instead of creating a duplicate report.
 Use **Staff Review** to inspect saved reports, confirm or
 correct conditions, and record priority, notes, and action recommendations.
+The combined review panel shows the photo and AI suggestion together.
+**Yes ? Confirm & Next** saves the suggested condition and opens the next report
+in the current view, keeping existing priority, next action, and notes.
+**No ? Review Details** reveals condition, priority, action, and notes controls.
+Saved reviews and reports without AI analysis keep the detailed form available.
+The Priority Situations panel stretches alongside the review on desktop and stacks
+below it on mobile, with a scrollable report list.
 Staff photo previews are capped at 260 pixels tall. Saving an assessment immediately
 updates the queue and counts.
 The right-side **Priority Situations** panel lists reviewed reports with staff-assigned
@@ -84,6 +99,31 @@ unassigned reports remain outside this panel; model suggestions never assign pri
 For reports recommending plowing, **Notify Plow Crew** opens a demo confirmation
 with an X close control. This previews notification feedback only; no crew is contacted,
 no snowplow is reserved, and no dispatch status is saved.
+After submission, **View my report** opens that specific report in **My Reports**.
+Choose **Show all my reports** to return to the session's full history.
+Staff can choose **Monitoring conditions**, **Needs reassessment**, **Resolved**, or
+**Plowing completed**, with a short reason required when saving these outcomes.
+Resolved closes the report without asserting plowing occurred; Plowing completed
+records staff confirmation. Both leave the active priority panel and remain in
+the **Closed** and **Reviewed** queues. A later reassessment reopens the report.
+The **Reassessment** filter and count highlight reports needing another assessment.
+Each saved decision and reason remains in the shared activity history.
+**Reports at this location** shows other photos and report numbers matching the
+location text after ignoring capitalization and extra spaces. Missing locations
+are not grouped; spelling variants and abbreviations are not inferred. These may
+be different incidents or dates. Opening or updating one report never updates its neighbors.
+
+**My Reports** shows uploads from the current browser session with their full report
+number, retained photo, latest staff decision, and staff note. **Refresh status** reads
+the latest saved review. Starting another photo preserves this session's history;
+restarting the browser session does not restore it. This is a local demonstration,
+and staff notes are visible in the citizen report view.
+Citizen and staff views share the same saved activity log: actual submission receipt,
+AI analysis completion (a suggestion, not a maintenance decision), and each saved staff
+review. Times include the date and use each viewer's browser timezone, with UTC as
+the fallback when it is unavailable. Saved timestamps are unchanged. Older reports show only their
+known upload and latest review times; earlier events are not reconstructed. Plowing
+recommendations do not confirm dispatch or a service time.
 The mode selector is navigation, not authentication. Keep this demonstration
 bound to localhost.
 

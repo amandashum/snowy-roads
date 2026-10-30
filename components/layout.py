@@ -12,8 +12,8 @@ def render_sidebar():
     with st.sidebar:
         render_brand()
         st.caption("WORKSPACE")
-        page = st.radio("Workspace", ["Report a condition", "Staff review"], key="workspace",
-                        format_func=lambda page: {"Report a condition": "Report a Condition", "Staff review": "Staff Review"}[page],
+        page = st.radio("Workspace", ["Report a condition", "My reports", "Staff review"], key="workspace",
+                        format_func=lambda page: {"Report a condition": "Report a Condition", "My reports": "My Reports", "Staff review": "Staff Review"}[page],
                         label_visibility="collapsed")
     return page
 
