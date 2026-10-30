@@ -25,7 +25,7 @@ def render_report_form():
                 st.image(photo, alt="Selected road photo for submission", width="stretch")
             except Exception:
                 st.error("This photo could not be previewed. Choose a valid JPEG or PNG.")
-    with right:
+    with right, st.container(key="observation-details"):
         st.subheader("Observation details")
         with st.form("citizen_report"):
             location = st.text_input("Location (optional)", max_chars=200,
