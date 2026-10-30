@@ -1,0 +1,47 @@
+/* Keep the supplied artwork intact; translucent surfaces protect readability. */
+[data-testid="stApp"] {
+    background-color: #c6e1fc;
+    background-image: url("data:image/png;base64,__BACKGROUND_IMAGE__");
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+[data-testid="stHeader"] {
+    background: transparent;
+}
+
+[data-testid="stMainBlockContainer"] {
+    width: calc(100% - 3rem);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding: clamp(1.25rem, 3vw, 2.5rem);
+    background: rgba(249, 252, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 18px;
+    box-shadow: 0 16px 48px rgba(29, 57, 94, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+[data-testid="stSidebar"] {
+    background: rgba(244, 249, 255, 0.94);
+    border-right: 1px solid rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+@media (max-width: 640px) {
+    [data-testid="stApp"] {
+        background-attachment: scroll;
+    }
+
+    [data-testid="stMainBlockContainer"] {
+        width: calc(100% - 1.25rem);
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        padding: 1.25rem;
+        border-radius: 12px;
+    }
+}

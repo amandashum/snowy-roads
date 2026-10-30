@@ -1,5 +1,7 @@
 """Render the shared dashboard shell and single-page workspace navigation."""
 
+import base64
+
 import streamlit as st
 
 import reports
@@ -20,7 +22,13 @@ def render_sidebar():
 
 
 def render_brand():
-    """Display the local dashboard branding."""
+    """Display the local background, shared surface styling, and branding."""
+    dashboard = reports.ROOT / "dashboard"
+    background = base64.b64encode(
+        (dashboard / "assets" / "snowy_road_background.png").read_bytes()
+    ).decode("ascii")
+    stylesheet = (dashboard / "theme.css").read_text(encoding="utf-8")
+    st.html(f"<style>{stylesheet.replace('__BACKGROUND_IMAGE__', background)}</style>")
     st.html((reports.ROOT / "dashboard" / "brand.html").read_text(encoding="utf-8"))
 
 

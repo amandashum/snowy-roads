@@ -7,8 +7,12 @@ gatherUsageStats = false
 
 [theme]
 base = "light"
-primaryColor = "#176657"
-backgroundColor = "#f5f7f7"
-secondaryBackgroundColor = "#e9efed"
-textColor = "#172f34"
+primaryColor = "#245fa6"
+backgroundColor = "#f6f9ff"
+secondaryBackgroundColor = "#e8f0fa"
+textColor = "#182d4b"
+# Keep saved-report confirmations in the same winter-blue palette.
+greenColor = "#245fa6"
+greenBackgroundColor = "#e8f0fa"
+greenTextColor = "#1e4e89"
 font = "sans serif"
