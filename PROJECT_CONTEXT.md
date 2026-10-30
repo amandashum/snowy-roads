@@ -357,7 +357,7 @@ Strip embedded image metadata before retaining uploaded images.
 Keep supplied location separate from embedded metadata.
 Use permitted, anonymized images for public demonstrations.
 Previewing a photo does not persist a report. Submitting a report automatically
-saves its photo and supplied details locally, with a visible notice before submission.
+saves its photo and supplied details locally. Local storage behavior is documented in README.md.
 Clearly explain local review storage and provide a reset option.
 
 ## 16. Future extensions

@@ -86,6 +86,8 @@ inference.py                # Model loading, preprocessing, and prediction
 
 UI components delegate persistence to `reports.py` and model execution to
 `inference.py`. Model outputs remain separate from staff decisions.
+The header, sidebar, and browser tab use the local logo at
+`tests/olaf-removebg-preview.png`; keep this image available when running the app.
 
 ## Data and training
 

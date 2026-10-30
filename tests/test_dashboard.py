@@ -161,7 +161,21 @@ def test_submission_receipt_survives_workspace_switch(storage, monkeypatch):
     monkeypatch.setattr(report_form, "classify_photo", predict)
     app = AppTest.from_file(Path("app.py").resolve(), default_timeout=30).run()
     assert not app.checkbox
-    assert any("Submitting automatically saves" in message.value for message in app.caption)
+    visible_text = "\n".join(
+        element.value for kind in ("caption", "markdown", "subheader")
+        for element in app.get(kind))
+    for removed_text in (
+        "LOCAL DEMONSTRATION",
+        "Photos and review records are saved on this computer.",
+        "No staff sign-in is configured.",
+        "For emergencies,",
+        "A useful photo shows the road surface",
+        "Include the travel lane",
+        "No photo has been selected.",
+        "Upload time is recorded separately.",
+        "Submitting automatically saves",
+    ):
+        assert removed_text not in visible_text
     assert not list(storage.glob("*.json"))
     app.text_input[0].set_value("Test intersection")
     app.button[0].click().run()

@@ -3,14 +3,14 @@
 import streamlit as st
 
 import reports
-from components.layout import render_brand, render_footer, render_sidebar
+from components.layout import LOGO, render_brand, render_footer, render_sidebar
 from components.report_form import render_report_form
 from components.staff_review import render_staff_review
 
 
 def main():
     """Initialize local storage and session state, then render the selected workspace."""
-    st.set_page_config(page_title="Snowy Roads · Road observations", page_icon=":material/weather_snowy:", layout="wide")
+    st.set_page_config(page_title="Snowy Roads · Road observations", page_icon=str(LOGO), layout="wide")
     reports.RECORDS.mkdir(exist_ok=True)
     reports.UPLOADS.mkdir(exist_ok=True)
     if "receipt" not in st.session_state:

@@ -1,7 +1,6 @@
 <style>
 .snowy-brand { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
-.snowy-mark { width:34px; height:34px; border-radius:8px; background:#176657; color:white;
-display:grid; place-items:center; font:700 23px system-ui; }
+.snowy-mark { width:64px; height:80px; object-fit:contain; }
 .snowy-wordmark { font:700 13px system-ui; letter-spacing:.14em; color:#176657; }
 .snowy-subtitle { font:400 12px system-ui; color:#485e61; margin-top:4px; }
 [class*="st-key-report-result-"] {
@@ -16,6 +15,6 @@ display:grid; place-items:center; font:700 23px system-ui; }
 }
 </style>
 <div class="snowy-brand" aria-label="Snowy Roads, winter condition review">
-  <span class="snowy-mark" aria-hidden="true">❄</span>
+  <img class="snowy-mark" src="{{LOGO_URI}}" alt="Snowy Roads logo">
   <div><div class="snowy-wordmark">SNOWY ROADS</div><div class="snowy-subtitle">Winter condition review</div></div>
 </div>

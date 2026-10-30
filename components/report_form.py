@@ -25,11 +25,6 @@ def render_report_form():
                 st.image(photo, alt="Selected road photo for submission", width="stretch")
             except Exception:
                 st.error("This photo could not be previewed. Choose a valid JPEG or PNG.")
-        else:
-            with st.container(border=True):
-                st.subheader("A useful photo shows the road surface")
-                st.write("Include the travel lane, use a clear view, and take the photo from a safe position.")
-                st.caption("No photo has been selected.")
     with right:
         st.subheader("Observation details")
         with st.form("citizen_report"):
@@ -38,8 +33,6 @@ def render_report_form():
             captured_at = st.text_input("Photo capture time (optional)",
                                         placeholder="2026-10-29T14:30:00-07:00",
                                         help="Include the timezone offset. Leave blank if unknown.", max_chars=64)
-            st.caption("Upload time is recorded separately. Missing capture time and location remain unknown.")
-            st.caption("Submitting automatically saves this photo and supplied details locally for staff review.")
             submit = st.form_submit_button("Analyze and save report", type="primary", width="stretch")
         show_result = False
         if submit:
