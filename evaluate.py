@@ -78,9 +78,13 @@ def main():
     matrix = [[0] * len(CLASSES) for _ in CLASSES]
     total_loss, count = 0.0, 0
     batch_losses = []
+
     loader = DataLoader(dataset, batch_size=32)
+
     print(f"Evaluating {len(dataset):,} test images", flush=True)
+
     start = time.perf_counter()
+
     with torch.inference_mode():
         for batch, (images, targets) in enumerate(loader, start=1):
             outputs = model(images)
@@ -89,28 +93,36 @@ def main():
             )
             total_loss += torch.nn.functional.cross_entropy(outputs, targets, reduction="sum").item()
             count += len(targets)
+
             for actual, predicted in zip(targets.tolist(), outputs.argmax(1).tolist()):
                 matrix[actual][predicted] += 1
+
             if batch == 1 or batch % 10 == 0 or batch == len(loader):
                 print(f"  Evaluation | Batch {batch}/{len(loader)} | "
                       f"Eval loss: {total_loss / count:.4f}", flush=True)
+                
     report = metrics(matrix)
     report["loss"] = total_loss / count
     report["cpu_pipeline_seconds_per_image"] = (time.perf_counter() - start) / len(dataset)
+    
     print(f"Evaluation complete | Eval loss: {report['loss']:.4f} | "
           f"Accuracy: {report['accuracy']:.1%}", flush=True)
+    
     train_counts = [len(list((args.data / "train" / label).glob("*.jpeg"))) for label in CLASSES]
     majority = max(range(len(CLASSES)), key=train_counts.__getitem__)
     report["majority_baseline_accuracy"] = sum(matrix[majority]) / len(dataset)
     report["model_version"] = metadata["model_version"]
     report["classes"] = CLASSES
+    
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2))
+    
     print(json.dumps(report, indent=2))
 
     from matplotlib.figure import Figure
 
     figure = Figure(figsize=(8, 5))
+    
     axes = figure.subplots()
     axes.plot(range(1, len(batch_losses) + 1), batch_losses,
               label="Test batch loss")
@@ -118,9 +130,12 @@ def main():
              xlabel="Test batch", ylabel="Cross-entropy loss")
     axes.grid(alpha=0.25)
     axes.legend()
+    
     figure.tight_layout()
+    
     graph_path = Path("graphs") / args.output.with_suffix(".loss.png").name
     graph_path.parent.mkdir(parents=True, exist_ok=True)
+    
     figure.savefig(graph_path, dpi=200)
     print(f"Evaluation loss graph saved: {graph_path}", flush=True)
 

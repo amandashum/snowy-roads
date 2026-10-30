@@ -59,7 +59,7 @@
   ],
   "count": 8733,
   "loss": 0.3737562848068411,
-  "cpu_pipeline_seconds_per_image": 0.010428592156174981,
+  "cpu_pipeline_seconds_per_image": 0.010633784335271483,
   "majority_baseline_accuracy": 0.4627275850223291,
   "model_version": "classifier",
   "classes": [
