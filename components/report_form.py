@@ -1,61 +1,88 @@
 """Render citizen photo uploads, observation details, and the saved receipt."""
 
 import base64
+import hashlib
 
 import streamlit as st
 
 import reports
 from components.classifier import classify_photo
-from components.suggestion import show_suggestion
+from components.layout import render_page_heading, render_section_heading
+from components.photo import render_photo
+from components.suggestion import render_condition_title, show_results
+
+
+def start_new_report():
+    """Clear the submission controls without deleting saved reports."""
+    st.session_state.receipt = None
+    st.session_state.upload_revision = st.session_state.get("upload_revision", 0) + 1
+    for key in ("report_location", "report_capture_time", "report_consent", "last_submission"):
+        st.session_state.pop(key, None)
 
 
 def render_report_form():
-    """Render the submission workspace and persist reports after consent."""
-    st.title("Report a road condition")
-    st.write("Upload a recent road photo for a suggested condition and staff assessment.")
-    left, right = st.columns([1.15, 1], gap="large")
-    with left:
-        st.subheader("Upload a road photo")
-        st.caption("Drag and drop one JPEG or PNG into the area below, or use the upload button to browse.")
-        photo = st.file_uploader("Road photo", type=["jpg", "jpeg", "png"],
-                                 accept_multiple_files=False,
-                                 help="JPEG or PNG, up to 10 MB and 20 million pixels. Avoid identifying people.")
+    """Render compact upload and details cards, followed by the latest saved result."""
+    render_page_heading("Check a Road Condition", "Upload a photo to check the condition and save a report",
+                        "Snowy Roads")
+    open_results = False
+    left, right = st.columns([1, 1], gap="large")
+    with left, st.container(border=True, key="upload_card"):
+        render_section_heading("01", "Upload a Photo")
+        st.caption("Drag and drop one JPEG or PNG, or choose Upload · Maximum 10 MB")
+        revision = st.session_state.get("upload_revision", 0)
+        photo = st.file_uploader("Road photo", type=["jpg", "jpeg", "png"], label_visibility="collapsed",
+                                 key=f"road_photo_{revision}", accept_multiple_files=False,
+                                 help="JPEG or PNG, up to 10 MB and 20 million pixels")
+        valid_photo = False
         if photo is not None:
-            try:
-                st.image(photo, alt="Selected road photo for submission", width="stretch")
-            except Exception:
-                st.error("This photo could not be previewed. Choose a valid JPEG or PNG.")
+            valid_photo = render_photo(photo, "upload", max_height=180)
         else:
-            with st.container(border=True):
-                st.subheader("A useful photo shows the road surface")
-                st.write("Include the travel lane, use a clear view, and take the photo from a safe position.")
-                st.caption("No photo has been selected.")
-    with right:
-        st.subheader("Observation details")
-        with st.form("citizen_report"):
-            location = st.text_input("Location (optional)", max_chars=200,
+            st.caption("Choose a clear view of the road surface")
+    with right, st.container(border=True, key="details_card"):
+        render_section_heading("02", "Details & Analysis")
+        st.caption("Add a location to make the report easier to find")
+        with st.form("citizen_report", border=False):
+            location = st.text_input("Location (optional)", key="report_location", max_chars=200,
                                      placeholder="Street, intersection, or nearby landmark")
-            captured_at = st.text_input("Photo capture time (optional)",
-                                        placeholder="2026-10-29T14:30:00-07:00",
-                                        help="Include the timezone offset. Leave blank if unknown.", max_chars=64)
-            st.caption("Upload time is recorded separately. Missing capture time and location remain unknown.")
-            consent = st.checkbox("Save this photo and supplied details locally for staff review.")
-            submit = st.form_submit_button("Analyze and save report", type="primary", width="stretch")
+            captured_at = st.text_input("Photo Taken At (optional)", key="report_capture_time",
+                                        placeholder="2026-10-30T14:30:00-03:30",
+                                        help="Include the timezone offset, or leave blank if unknown", max_chars=64)
+            consent = st.checkbox("Save this photo and details on this computer for staff review",
+                                  key="report_consent")
+            submit = st.form_submit_button("Analyze Photo", key="analyze_photo", type="primary", width="stretch")
         if submit:
             if photo is None:
-                st.error("Choose a road photo first.")
+                st.error("Please upload a road photo before analyzing")
+            elif not valid_photo:
+                st.error("Please upload a valid JPEG or PNG photo before analyzing")
             elif not consent:
-                st.error("Confirm local storage before submitting.")
+                st.error("Confirm local storage before submitting")
             else:
+                content = photo.getvalue()
+                signature = (hashlib.sha256(content).hexdigest(), location, captured_at)
                 try:
-                    with st.spinner("Saving photo and checking the road condition…"):
-                        st.session_state.receipt = reports.create_report({
-                            "image_base64": base64.b64encode(photo.getvalue()).decode(),
-                            "location": location, "captured_at": captured_at}, predictor=classify_photo)
+                    if signature != st.session_state.get("last_submission") or not st.session_state.receipt:
+                        with st.spinner("Analyzing photo…"):
+                            st.session_state.receipt = reports.create_report({
+                                "image_base64": base64.b64encode(content).decode(),
+                                "location": location, "captured_at": captured_at}, predictor=classify_photo)
+                        st.session_state.last_submission = signature
+                    open_results = True
                 except (ValueError, OSError) as error:
                     st.error(f"The report could not be submitted: {error}")
-        if st.session_state.receipt:
-            receipt = st.session_state.receipt
-            st.success(f"Report saved · {receipt['record_id'][:8]}")
-            show_suggestion(receipt)
-            st.caption("This receipt belongs to your most recently saved report.")
+    if st.session_state.receipt:
+        receipt = st.session_state.receipt
+        with st.container(border=True, key="saved_report"):
+            summary, actions = st.columns([1.4, 1], gap="large", vertical_alignment="center")
+            with summary:
+                render_condition_title(receipt["predicted_class"] if receipt["inference_status"] == "available"
+                                       else None, "LATEST SAVED REPORT")
+                st.success(f"Report saved · {receipt['record_id'][:8]}")
+                st.caption(receipt["location"] or "Location not provided")
+            with actions:
+                view_results = st.button("View Results", key="view_receipt_results", icon=":material/bar_chart:",
+                                         type="primary", width="stretch")
+                st.button("Check Another Photo", key="new_photo", icon=":material/add_photo_alternate:",
+                          on_click=start_new_report, width="stretch")
+        if open_results or view_results:
+            show_results(receipt)

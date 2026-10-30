@@ -1,4 +1,6 @@
-"""Display original model suggestions consistently across dashboard views."""
+"""Display photo-analysis results in a shared dialog."""
+
+from html import escape
 
 import streamlit as st
 
@@ -16,19 +18,26 @@ def assessment_flag(record):
     return "Routine condition review"
 
 
-def show_suggestion(record):
-    """Render the original suggestion, scores, version, and uncertainty limitations."""
-    st.subheader("Model suggestion")
+def render_condition_title(condition, label):
+    """Use one heading treatment for the result dialog and saved-report summary."""
+    title = DISPLAY[condition].title() if condition is not None else "Ready for Staff Review"
+    st.html(f'<div class="snowy-condition-heading"><p class="snowy-condition-label">{escape(label)}</p>'
+            f'<h3 class="snowy-condition-title">{escape(title)}</h3></div>')
+
+
+@st.dialog("Road Condition Analysis", width="medium", on_dismiss="rerun")
+def show_results(record):
+    """Show the original prediction and all class scores without changing the record."""
     if record["inference_status"] != "available":
-        st.warning("The model is unavailable. This report is saved for manual review.")
-        return
-    st.markdown(f"### {DISPLAY[record['predicted_class']]}")
-    st.caption(f"Model: {record['model_version']} · Label mapping: {record['label_mapping_version']}")
-    st.info(assessment_flag(record))
-    if record["uncertain"] is None:
-        st.caption("Uncertainty threshold has not been validated. Every suggestion needs staff review.")
-    with st.expander("Inspect model scores"):
-        st.caption("Scores describe model preference, not verified probabilities of correctness.")
-        st.table([{"Condition": DISPLAY[label], "Model score": f"{score:.1%}"}
-                  for label, score in record["class_scores"].items()], alt="Scores for all four condition classes")
-    st.caption("A condition suggestion does not establish road safety or whether plowing is needed.")
+        st.warning("Analysis unavailable — your photo is saved for staff review")
+    else:
+        with st.container(key="detected_condition"):
+            render_condition_title(record["predicted_class"], "DETECTED CONDITION")
+        if record["uncertain"] is True:
+            st.warning("Uncertain result. Check the photo before choosing a condition.")
+        scores = sorted(record["class_scores"].items(), key=lambda item: item[1], reverse=True)
+        st.table([{"Condition": DISPLAY[label], "Match Score": f"{score:.1%}"}
+                  for label, score in scores], alt="Photo match scores for all four road conditions")
+    st.caption(f"Report {record['record_id'][:8]}")
+    if st.button("Done", key="close_analysis_results", type="primary", width="stretch"):
+        st.rerun()
