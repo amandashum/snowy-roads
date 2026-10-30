@@ -51,6 +51,34 @@ def show_crew_notification(record):
         st.rerun()
 
 
+def confirm_delete_report(record):
+    """Ask for confirmation before permanently deleting a closed report."""
+    identifier = record["record_id"]
+    st.write(f"Report {identifier} · {record.get('location') or 'Unknown location'}")
+    st.warning("Permanently delete this report, its photo, notes, and activity history? This cannot be undone.")
+    cancel, delete = st.columns(2)
+    with cancel:
+        if st.button("Cancel", key="cancel_delete_report", width="stretch"):
+            st.session_state.pop("delete_requested", None)
+            st.rerun()
+    with delete:
+        if st.button("Permanently delete", key="confirm_delete_report", type="primary", width="stretch"):
+            try:
+                reports.delete_closed_report(identifier)
+            except (OSError, ValueError) as error:
+                st.error(f"The report could not be fully deleted: {error}")
+            else:
+                st.session_state.my_report_ids = [item for item in st.session_state.get("my_report_ids", [])
+                                                  if item != identifier]
+                if (st.session_state.get("receipt") or {}).get("record_id") == identifier:
+                    st.session_state.pop("receipt", None)
+                if st.session_state.get("focused_report") == identifier:
+                    st.session_state.pop("focused_report", None)
+                st.session_state.pop("delete_requested", None)
+                st.session_state.review_deleted = True
+                st.rerun()
+
+
 def render_priority_situations(records):
     """Display a scrollable panel of reviewed photos with staff-assigned priorities and actions."""
     situations = priority_situations(records)
@@ -144,16 +172,18 @@ def confirm_suggestion(record, identifiers):
 def render_review_choice(record, identifiers):
     """Offer quick confirmation or reveal the existing detailed assessment form."""
     selected = record["record_id"]
+    if st.session_state.get("review_details_report") != selected:
+        st.session_state.review_details_report = None
     available = record["inference_status"] == "available" and record["predicted_class"] in DISPLAY
     if available:
         st.subheader("Is the AI suggestion correct?")
         with st.container(horizontal=True):
-            st.button("Yes ? Confirm & Next", key=f"confirm_review_{selected}", type="primary",
+            st.button("Yes — Confirm & Next", key=f"confirm_review_{selected}", type="primary",
                       on_click=confirm_suggestion, args=(record, identifiers))
-            if st.button("No ? Review Details", key=f"correct_review_{selected}"):
-                st.session_state[f"review_details_{selected}"] = True
+            if st.button("No — Review Details", key=f"correct_review_{selected}"):
+                st.session_state.review_details_report = selected
         st.caption("Confirmation keeps the current priority and next action. It does not dispatch a crew.")
-    if not available or record["review_status"] != "pending" or st.session_state.get(f"review_details_{selected}"):
+    if not available or st.session_state.get("review_details_report") == selected:
         render_review_form(record)
 
 
@@ -182,6 +212,7 @@ def render_review_form(record):
         try:
             reports.review_report(selected, {"staff_class": condition, "priority": priority,
                                             "action": action, "staff_note": note})
+            st.session_state.review_details_report = None
             st.session_state.review_saved = True
             st.rerun()
         except (ValueError, OSError) as error:
@@ -193,6 +224,8 @@ def render_staff_review():
     render_page_heading("Review Road Conditions", "Review a photo, confirm the condition, and choose the next step", "Snowy Roads")
     if st.session_state.pop("review_saved", False):
         st.success("Review saved. The queue is up to date.")
+    if st.session_state.pop("review_deleted", False):
+        st.success("Closed report deleted.")
     if error := st.session_state.pop("review_error", None):
         st.error(f"The review could not be saved: {error}")
     records = load_reports()
@@ -220,7 +253,7 @@ def render_staff_review():
         st.session_state.selected_report = identifiers[0]
     selected = st.selectbox("Choose a Report", identifiers, key="selected_report",
                         format_func=lambda identifier: next(
-                            f"{row['record_id'][:8]} ? {row['location'] or 'Unknown location'} ? {assessment_flag(row)}"
+                            f"{row['record_id'][:8]} · {row['location'] or 'Unknown location'} · {assessment_flag(row)}"
                             for row in filtered if row["record_id"] == identifier))
     record = next(row for row in filtered if row["record_id"] == selected)
     if record.get("action") == "reassess":
@@ -231,6 +264,11 @@ def render_staff_review():
             render_observation(record)
             st.divider()
             render_review_choice(record, identifiers)
+            if record.get("action") in reports.CLOSED_ACTIONS:
+                if st.button("Delete report", key=f"delete_report_{selected}", icon=":material/delete:"):
+                    st.session_state.delete_requested = selected
+                if st.session_state.get("delete_requested") == selected:
+                    confirm_delete_report(record)
         with panel:
             render_priority_situations(records)
     render_related_reports(records, record)

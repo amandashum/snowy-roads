@@ -182,6 +182,27 @@ def review_report(identifier, payload):
     return record
 
 
+def delete_closed_report(identifier):
+    """Permanently delete a closed report's local photo and record.
+
+    Raises ValueError when the report is not closed and OSError when a file
+    cannot be accessed. A missing photo is already considered deleted.
+    """
+    path = record_path(identifier)
+    record = json.loads(path.read_text(encoding="utf-8"))
+    if record.get("action") not in CLOSED_ACTIONS:
+        raise ValueError("Only closed reports can be deleted")
+    photo = UPLOADS / f"{identifier}.png"
+    try:
+        photo.unlink(missing_ok=True)
+    except OSError as error:
+        raise OSError("The photo could not be deleted; the report was retained") from error
+    try:
+        path.unlink()
+    except OSError as error:
+        raise OSError("The photo was removed, but the report could not be deleted") from error
+
+
 def report_activity(record):
     """Return saved events, or only known upload and latest-review facts for older records."""
     if "activity" in record:

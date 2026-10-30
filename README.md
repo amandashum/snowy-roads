@@ -83,10 +83,11 @@ unchanged submission reopens its existing results instead of creating a duplicat
 Use **Staff Review** to inspect saved reports, confirm or
 correct conditions, and record priority, notes, and action recommendations.
 The combined review panel shows the photo and AI suggestion together.
-**Yes ? Confirm & Next** saves the suggested condition and opens the next report
+**Yes — Confirm & Next** saves the suggested condition and opens the next report
 in the current view, keeping existing priority, next action, and notes.
-**No ? Review Details** reveals condition, priority, action, and notes controls.
-Saved reviews and reports without AI analysis keep the detailed form available.
+**No — Review Details** reveals condition, priority, action, and notes controls.
+Saved reviews also require **No — Review Details** to open the form. Reports
+without AI analysis show the form for manual review.
 The Priority Situations panel stretches alongside the review on desktop and stacks
 below it on mobile, with a scrollable report list.
 Staff photo previews are capped at 260 pixels tall. Saving an assessment immediately
@@ -106,6 +107,9 @@ Staff can choose **Monitoring conditions**, **Needs reassessment**, **Resolved**
 Resolved closes the report without asserting plowing occurred; Plowing completed
 records staff confirmation. Both leave the active priority panel and remain in
 the **Closed** and **Reviewed** queues. A later reassessment reopens the report.
+Staff can permanently delete an individual closed report after confirming the
+action. This removes its local record, photo, notes, and activity history; it
+also removes the report from My Reports. Deletion cannot be undone.
 The **Reassessment** filter and count highlight reports needing another assessment.
 Each saved decision and reason remains in the shared activity history.
 **Reports at this location** shows other photos and report numbers matching the

@@ -650,6 +650,79 @@ def test_staff_outcomes_and_related_navigation_match_citizen_history(storage):
     assert any("Crew confirmed work completed" in item.value for item in app.text)
 
 
+def test_delete_closed_report_guards_status_and_reports_file_errors(storage, monkeypatch):
+    """Reject active reports and explain failures affecting either local file."""
+    image = io.BytesIO()
+    Image.new("RGB", (32, 32)).save(image, format="PNG")
+    record = reports.create_report({"image_base64": base64.b64encode(image.getvalue()).decode()},
+                                   predictor=lambda *args: (_ for _ in ()).throw(FileNotFoundError()))
+    identifier = record["record_id"]
+    photo = storage / f"{identifier}.png"
+    path = reports.record_path(identifier)
+    with pytest.raises(ValueError, match="Only closed"):
+        reports.delete_closed_report(identifier)
+    assert photo.exists() and path.exists()
+    reports.review_report(identifier, {"staff_class": "light", "priority": "routine",
+                                       "action": "resolved", "staff_note": "Resolved"})
+    unlink = Path.unlink
+
+    def fail_photo(target, *args, **kwargs):
+        """Simulate a photo deletion failure while leaving test cleanup usable."""
+        if target == photo:
+            raise PermissionError("fixture")
+        return unlink(target, *args, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", fail_photo)
+        with pytest.raises(OSError, match="photo could not be deleted"):
+            reports.delete_closed_report(identifier)
+    assert photo.exists() and path.exists()
+
+    def fail_record(target, *args, **kwargs):
+        """Simulate failure after the photo has been removed."""
+        if target == path:
+            raise PermissionError("fixture")
+        return unlink(target, *args, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", fail_record)
+        with pytest.raises(OSError, match="photo was removed"):
+            reports.delete_closed_report(identifier)
+    assert not photo.exists() and path.exists()
+    reports.delete_closed_report(identifier)
+    assert not path.exists()
+
+
+def test_closed_report_delete_confirmation_and_cancel(storage):
+    """Cancel keeps the report, while confirmation removes it from the local views."""
+    image = io.BytesIO()
+    Image.new("RGB", (32, 32)).save(image, format="PNG")
+    record = reports.create_report({"image_base64": base64.b64encode(image.getvalue()).decode()},
+                                   predictor=lambda *args: (_ for _ in ()).throw(FileNotFoundError()))
+    identifier = record["record_id"]
+    app = AppTest.from_file(Path("app.py").resolve(), default_timeout=30).run()
+    app.session_state["my_report_ids"] = [identifier]
+    app.session_state["receipt"] = record
+    app.radio(key="workspace").set_value("Staff review").run()
+    assert not any(button.key == f"delete_report_{identifier}" for button in app.button)
+    reports.review_report(identifier, {"staff_class": "light", "priority": "routine",
+                                       "action": "resolved", "staff_note": "Resolved"})
+    app.segmented_control[0].set_value("Closed").run()
+    app.button(key=f"delete_report_{identifier}").click().run()
+    assert any("cannot be undone" in warning.value for warning in app.warning)
+    app.button(key="cancel_delete_report").click().run()
+    assert reports.record_path(identifier).exists()
+    app.button(key=f"delete_report_{identifier}").click().run()
+    app.button(key="confirm_delete_report").click().run()
+    assert not app.exception
+    assert not app.error, [item.value for item in app.error]
+    assert not reports.record_path(identifier).exists()
+    assert not (storage / f"{identifier}.png").exists()
+    assert any("Closed report deleted" in item.value for item in app.success)
+    app.radio(key="workspace").set_value("My reports").run()
+    assert any("No reports yet" in item.value for item in app.info)
+
+
 def test_staff_quick_confirmation_preserves_decisions_and_advances(storage):
     """Confirm suggestions in All without losing saved decisions or model evidence."""
     image = io.BytesIO()
@@ -671,6 +744,13 @@ def test_staff_quick_confirmation_preserves_decisions_and_advances(storage):
     assert not app.text_area
     app.segmented_control[0].set_value("All").run()
     app.selectbox(key="selected_report").set_value(first["record_id"]).run()
+    assert not app.text_area
+    app.button(key=f"correct_review_{first['record_id']}").click().run()
+    assert app.text_area[0].value == "Check again later"
+    app.selectbox(key="selected_report").set_value(second["record_id"]).run()
+    assert not app.text_area
+    app.selectbox(key="selected_report").set_value(first["record_id"]).run()
+    assert not app.text_area
     app.button(key=f"confirm_review_{first['record_id']}").click().run()
     assert not app.exception
     assert app.selectbox(key="selected_report").value == second["record_id"]

@@ -157,6 +157,21 @@
 [data-testid="stBaseButton-primary"]:hover { background: #194c88; border-color: #194c88; }
 [data-testid="stBaseButton-secondary"] { border-color: #cbdbee; color: #254f7e; background: #fff; }
 [data-testid="stBaseButton-secondary"]:hover { border-color: #8badcf; background: #edf4fc; color: #163b66; }
+[class*="st-key-correct_review_"] [data-testid="stBaseButton-secondary"]:hover {
+    background: #b42318;
+    border-color: #b42318;
+    color: #fff;
+}
+:is([class*="st-key-delete_report_"], .st-key-confirm_delete_report) button {
+    background: #b42318;
+    border-color: #b42318;
+    color: #fff;
+}
+:is([class*="st-key-delete_report_"], .st-key-confirm_delete_report) button:hover {
+    background: #8f1a12;
+    border-color: #8f1a12;
+    color: #fff;
+}
 [data-testid="stTextInputRootElement"], [data-baseweb="select"] > div, [data-testid="stTextArea"] textarea {
     border-radius: 9px;
     background: #f0f5fc;
