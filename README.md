@@ -33,6 +33,12 @@ the workspace selector provides navigation, not authentication.
 1. **Report a Condition:** upload a JPEG or PNG (up to 10 MB and 20 million
    pixels), optionally enter location and capture time, and select Analyze
    Photo. Previewing alone does not submit a report.
+   **Photo Taken At** is an optional 24-hour time picker with **Time Zone** beside
+   it. Leave the time blank if unknown. Entering a time assumes today's date in
+   the selected timezone and saves its corresponding UTC offset. The browser
+   timezone is used when the optional timezone selector is left empty. Its menu
+   lists region and timezone names, such as Newfoundland · America/St_Johns.
+   Repeated daylight-saving times require choosing which occurrence was intended.
 2. **My Reports:** see submissions from your current browser session, staff
    decisions, notes, and activity. Refresh status to read the latest review.
    Session membership is not restored after starting a new browser session.
